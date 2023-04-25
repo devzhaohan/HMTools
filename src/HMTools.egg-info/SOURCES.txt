@@ -6,4 +6,5 @@ src/example.py
 src/HMTools.egg-info/PKG-INFO
 src/HMTools.egg-info/SOURCES.txt
 src/HMTools.egg-info/dependency_links.txt
+src/HMTools.egg-info/requires.txt
 src/HMTools.egg-info/top_level.txt

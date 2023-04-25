@@ -7,3 +7,9 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+*.log
+/dist/
+.idea/
+/src/HMTools.egg-info/
+/src/PysTools.egg-info/
