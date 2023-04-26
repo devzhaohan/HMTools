@@ -1,10 +1,10 @@
 [project]
-name = "PysTools"
-version = "0.0.2"
+name = "pystools"
+version = "0.0.4"
 authors = [
   { name="hanmind", email="devzhao@126.com" },
 ]
-description = "PysTools"
+description = "pystools"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [

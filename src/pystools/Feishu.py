@@ -72,7 +72,7 @@ TABLES_FIELDS = '/open-apis/bitable/v1/apps/:app_token/tables/:table_id/fields'
 
 lark_host="https://open.feishu.cn"
 
-from sLogger import Loggings
+from Logger import Loggings
 
 class Feishu(object):
     def __init__(self, app_id, app_secret,

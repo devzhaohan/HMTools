@@ -63,35 +63,3 @@ if __name__ == '__main__':
     loggings.add(f"file_{time.time()}.log", rotation="500 MB")
     loggings.info(f'If you are using Python {n1}, prefer {n2} of course!')
     logger.info(f'xxxxxxxxxxxxxxxxx')
-
-
-#
-# p1 = os.path.abspath(__file__)
-#
-# # basedir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#
-# # print(f"log basedir{basedir}")  # /xxx/python_code/FastAdmin/backend/app
-# # 定位到log日志文件
-# log_path = os.path.join(basedir, 'logs')
-#
-# if not os.path.exists(log_path):
-#     os.mkdir(log_path)
-#
-# # log_path_error = os.path.join(log_path, f'{time.strftime("%Y-%m-%d")}_error.log')
-# log_path_error = os.path.join(log_path, 'info.log')
-#
-# # 日志简单配置
-# # 具体其他配置 可自行参考 https://github.com/Delgan/loguru
-# logger.add(log_path_error, rotation="12:00", retention="5 days", enqueue=True, encoding="utf-8")
-
-#
-# if __name__ == '__main__':
-#     log = logger('all.log', level='debug')
-#     log.logger.debug('debug')
-#     log.logger.info('info')
-#     log.logger.warning('警告')
-#     log.logger.error('报错')
-#     log.logger.critical('严重')
-#     log.logger.exception("ex")
-#     logger('error.log', level='error').logger.error('error')
