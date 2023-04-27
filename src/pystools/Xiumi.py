@@ -1,13 +1,12 @@
 # 绑定秀米账号
 import hashlib
 import json
-import os
 import random
 import time
 
 import urllib3
 
-from src import Feishu
+from .Feishu import Feishu
 
 http = urllib3.PoolManager()
 

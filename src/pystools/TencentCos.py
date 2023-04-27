@@ -19,6 +19,16 @@ class Cos(object):
         self.bucket = bucket
         self.domain = domain
 
+
+    # 判断文件是否存在
+    def exist(self, key):
+        response = self.client.object_exists(
+            Bucket=self.bucket,
+            Key=key)
+        # print(response)
+        return response
+
+
     #### 文件流简单上传（不支持超过5G的文件，推荐使用下方高级上传接口）
     # 强烈建议您以二进制模式(binary mode)打开文件,否则可能会导致错误
     def upload_file_from_local_file(self, local_file_path, key):

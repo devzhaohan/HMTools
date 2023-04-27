@@ -6,6 +6,10 @@ import requests
 import urllib3 as urllib3
 from requests_toolbelt import MultipartEncoder
 
+# from src.pystools.Logger import Loggings
+from .Logger import Loggings
+
+
 urllib3.disable_warnings()
 FEISHU_HTTP_POOL = urllib3.PoolManager(num_pools=1000, cert_reqs='CERT_NONE')
 # 其他请求
@@ -27,6 +31,10 @@ DRIVE_PERMISSION_MEMBER_PERMITTED = "/open-apis/drive/permission/member/permitte
 DRIVE_PERMISSIONS_MEMBERS = '/open-apis/drive/v1/permissions/:token/members'
 
 BITABLE_RECORDS = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records"
+
+# 删除记录
+BITABLE_RECORD = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/:record_id"
+
 # 下载素材
 MEDIAS_DOWNLOAD = "/open-apis/drive/v1/medias/:file_token/download"
 # 获取素材临时下载链接
@@ -72,7 +80,7 @@ TABLES_FIELDS = '/open-apis/bitable/v1/apps/:app_token/tables/:table_id/fields'
 
 lark_host="https://open.feishu.cn"
 
-from Logger import Loggings
+
 
 class Feishu(object):
     def __init__(self, app_id, app_secret,
@@ -259,6 +267,26 @@ class Feishu(object):
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
+        return resp.get("data")
+
+
+    def bitable_record_delete(self, file_token, table_id, record_id):
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORD
+        ).replace(":app_token", file_token).replace(":table_id", table_id).replace(":record_id", record_id)
+        action = "DELETE"
+        resp = self.req_feishu_api(action, url=url)
+        return resp.get("data")
+
+
+    def bitable_record(self, file_token, table_id, record_id):
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORD
+        ).replace(":app_token", file_token).replace(":table_id", table_id).replace(":record_id", record_id)
+        action = "GET"
+        resp = self.req_feishu_api(action, url=url)
         return resp.get("data")
 
     def medias_download(self, file_token, param={}):
@@ -685,10 +713,8 @@ class MyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 if __name__ == '__main__':
-    feishu = Feishu(app_id="xxxxxx", app_secret="xxxxxx")
-
-    file_token = "xxxxxx"
-    table_id = "xxxxxx"
-    res = feishu.bitable_records(file_token, table_id)
+    feishu = Feishu(app_id="xxx", app_secret="xxx")
+    res = feishu.bitable_record_delete(file_token="xxx",
+                                       table_id="xxx",record_id="xxx")
     print(res)
 
