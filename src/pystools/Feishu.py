@@ -6,8 +6,8 @@ import requests
 import urllib3 as urllib3
 from requests_toolbelt import MultipartEncoder
 
-# from src.pystools.Logger import Loggings
-from .Logger import Loggings
+from src.pystools.Logger import Loggings
+# from .Logger import Loggings
 
 
 urllib3.disable_warnings()
@@ -714,6 +714,7 @@ if __name__ == '__main__':
 
     file_token = "xxx"
     table_id = "xxx"
+
 
     feishu = Feishu(app_id=app_id, app_secret=app_secret)
     res = feishu.bitable_records(app_token=file_token,

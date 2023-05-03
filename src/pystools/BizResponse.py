@@ -1,7 +1,7 @@
 import datetime
 from typing import Any
 
-from BizResponseCode import BizResponseCode
+from .BizResponseCode import BizResponseCode
 
 
 class BizException(Exception):

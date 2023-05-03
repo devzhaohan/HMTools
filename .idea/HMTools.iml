@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv/bin" />
       <excludeFolder url="file://$MODULE_DIR$/venv/lib" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.10 (HMTools)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (HMTools)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
