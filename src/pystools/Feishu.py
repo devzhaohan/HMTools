@@ -78,8 +78,7 @@ chat_members = '/open-apis/im/v1/chats/:chat_id/members'
 # 多维表格列出字段
 TABLES_FIELDS = '/open-apis/bitable/v1/apps/:app_token/tables/:table_id/fields'
 
-lark_host="https://open.feishu.cn"
-
+lark_host = "https://open.feishu.cn"
 
 
 class Feishu(object):
@@ -98,8 +97,6 @@ class Feishu(object):
         self._app_id = app_id
         self._app_secret = app_secret
         self.print_feishu_log = print_feishu_log
-
-
 
     @property
     def tenant_access_token(self):
@@ -123,7 +120,7 @@ class Feishu(object):
                                         req_body=req_body, headers=headers)
                 except:
                     raise LarkException(code=resp.status, msg="response status: {}  ,response data: {} ".format(
-                        resp.status,resp.data.decode('utf-8')),
+                        resp.status, resp.data.decode('utf-8')),
                                         url=url,
                                         req_body=req_body, headers=headers)
         # response_dict = resp.json()
@@ -132,7 +129,8 @@ class Feishu(object):
             code = response_dict.get("code", -1)
             if code != 0:
                 self.logger.exception("url:{},response:{}".format(url, response_dict))
-                raise LarkException(code=code, msg=response_dict.get("msg"), url=url, req_body=req_body, headers=headers)
+                raise LarkException(code=code, msg=response_dict.get("msg"), url=url, req_body=req_body,
+                                    headers=headers)
 
     def _handle_resp_code(self, resp, req_url):
         try:
@@ -150,7 +148,8 @@ class Feishu(object):
                             },
                                 {
                                     "tag": "text",
-                                    "text": '返回异常: {} \n'.format(json.dumps(response_dict, ensure_ascii=False, indent=4, separators=(',', ': ')))
+                                    "text": '返回异常: {} \n'.format(
+                                        json.dumps(response_dict, ensure_ascii=False, indent=4, separators=(',', ': ')))
                                 }
                             ],
                             [{
@@ -196,19 +195,20 @@ class Feishu(object):
                         resp_dict = json.loads(resp_msg)
                     except:
                         return {'content_type': content_type, 'file_bytes': resp_data}
-                    code = resp_dict.get("code",None)
+                    code = resp_dict.get("code", None)
                     msg = resp_dict.get("msg", None)
                     error = resp_dict.get("error", None)
                     if code and msg and error:
-                        raise LarkException(code=code, msg=json.dumps(resp_dict,ensure_ascii=False), url=url,req_body=req_body, headers=headers)
+                        raise LarkException(code=code, msg=json.dumps(resp_dict, ensure_ascii=False), url=url,
+                                            req_body=req_body, headers=headers)
 
-                return {'content_type':content_type,'file_bytes':resp_data}
+                return {'content_type': content_type, 'file_bytes': resp_data}
 
         resp_msg = resp.data.decode('utf-8')
         if self.print_feishu_log:
             self.logger.info("飞书接口响应：{}".format(resp_msg))
 
-        self._check_error_response(resp, check_code, check_status, unquote(url),headers)
+        self._check_error_response(resp, check_code, check_status, unquote(url), headers)
         try:
             response_dict = json.loads(resp_msg)
             return response_dict
@@ -269,7 +269,6 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
         return resp.get("data")
 
-
     def bitable_record_delete(self, file_token, table_id, record_id):
         self._authorize_tenant_access_token()
         url = "{}{}".format(
@@ -278,7 +277,6 @@ class Feishu(object):
         action = "DELETE"
         resp = self.req_feishu_api(action, url=url)
         return resp.get("data")
-
 
     def bitable_record(self, file_token, table_id, record_id):
         self._authorize_tenant_access_token()
@@ -297,8 +295,6 @@ class Feishu(object):
         filename = file_token + "." + subfix
 
         return filename, file_bytes
-
-
 
     def medias_download_to_bytes(self, file_token, param={}):
         self._authorize_tenant_access_token()
@@ -319,10 +315,9 @@ class Feishu(object):
             lark_host, MEDIAS_BATCH_GET_TMP_DOWNLOAD_URL
         )
 
-        url = url + "?" + urlencode({"file_tokens":file_tokens})
+        url = url + "?" + urlencode({"file_tokens": file_tokens})
         resp = self.req_feishu_api("GET", url=url, check_code=False)
         return resp.get("data")
-
 
     def drive_files_download_to_bytes(self, file_token):
         self._authorize_tenant_access_token()
@@ -468,10 +463,12 @@ class Feishu(object):
                 with open(file_path_or_binary, 'rb') as f:
                     file_binary = f.read()  # bytes
             else:
-                raise LarkException(code=-1, msg="file_path_or_binary参数：{} 应该是文件路径".format(file_path_or_binary),
+                raise LarkException(code=-1,
+                                    msg="file_path_or_binary参数：{} 应该是文件路径".format(file_path_or_binary),
                                     url=url)
         else:
-            raise LarkException(code=-1, msg="file_path_or_binary参数：{} 应该是文件路径或bytes".format(file_path_or_binary),
+            raise LarkException(code=-1,
+                                msg="file_path_or_binary参数：{} 应该是文件路径或bytes".format(file_path_or_binary),
                                 url=url)
 
         form = {'file_name': file_name,
@@ -553,8 +550,7 @@ class Feishu(object):
         # 目前不支持获取机器人类别的协作者，只能用如下方法了
         return self.drive_permission_member_permitted(token, type)
 
-
-    def drive_permission_member_permitted(self,token, type, perm='edit'):
+    def drive_permission_member_permitted(self, token, type, perm='edit'):
         self._authorize_tenant_access_token()
         url = "{}{}".format(
             lark_host, DRIVE_PERMISSION_MEMBER_PERMITTED
@@ -578,8 +574,8 @@ class Feishu(object):
         """
         self._authorize_tenant_access_token()
         url = "{}{}?type={}&fields=*".format(
-            lark_host, DRIVE_PERMISSIONS_MEMBERS,type
-        ).replace(':token',token)
+            lark_host, DRIVE_PERMISSIONS_MEMBERS, type
+        ).replace(':token', token)
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
 
@@ -648,7 +644,6 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url, check_code=False, check_status=False)
         return resp
 
-
     def tables_fields(self, app_token, table_id):
 
         self._authorize_tenant_access_token()
@@ -659,8 +654,7 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url)
         return resp.get('data')
 
-
-    def update_bitable_record(self,file_token, table_id, update_data, record_id=None):
+    def update_bitable_record(self, file_token, table_id, update_data, record_id=None):
         """
         更新多维表格的数据
         :param feishu:
@@ -683,8 +677,9 @@ class Feishu(object):
         res = self.bitable_records(file_token, table_id, record_id=record_id, req_body=data)
         return res
 
+
 class LarkException(Exception):
-    def __init__(self, code=0, msg=None, url=None, req_body=None,headers=None):
+    def __init__(self, code=0, msg=None, url=None, req_body=None, headers=None):
         self.url = url
         self.req_body = req_body
         self.code = code
@@ -712,9 +707,17 @@ class MyEncoder(json.JSONEncoder):
             return str(obj, encoding='utf-8')
         return json.JSONEncoder.default(self, obj)
 
+
 if __name__ == '__main__':
-    feishu = Feishu(app_id="xxx", app_secret="xxx")
-    res = feishu.bitable_record_delete(file_token="xxx",
-                                       table_id="xxx",record_id="xxx")
-    print(res)
+    app_id = "xxx"
+    app_secret = "xxx"
+
+    file_token = "xxx"
+    table_id = "xxx"
+
+    feishu = Feishu(app_id=app_id, app_secret=app_secret)
+    res = feishu.bitable_records(app_token=file_token,
+                                 table_id=table_id)
+    items = res.get('items')
+
 
