@@ -1,6 +1,6 @@
 [project]
 name = "pystools"
-version = "0.0.13"
+version = "0.0.17"
 authors = [
   { name="木坦坦", email="devzhao@126.com" },
 ]
@@ -20,7 +20,9 @@ dependencies = [
     "loguru",
     "cos-python-sdk-v5",
     "oss2",
-    "urllib3"
+    "urllib3",
+#    "Pillow-SIMD"
+
 ]
 
 

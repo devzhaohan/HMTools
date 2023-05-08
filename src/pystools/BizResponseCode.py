@@ -11,6 +11,7 @@ class BizResponseCode(Enum):
     TOKEN_INVALID = 200100, "token 过期或无效"
     NO_PERMISSION = 200001,"用户无权限"
     PARAM_ERROR = 300100, "参数错误"
+    QUERY_NO_RESULT = 300200, "查询无结果"
 
     def __init__(self, code, desc):
         self._code = code

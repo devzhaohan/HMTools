@@ -1,5 +1,7 @@
 import datetime
 from typing import Any
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from typing import Any, Dict, Optional, Sequence, Type
 
 from .BizResponseCode import BizResponseCode
 
@@ -12,7 +14,6 @@ class BizException(Exception):
             self.code = resp_code
         self.msg = msg
         self.data = data
-
 
 class BizResponse:
     def __init__(self, data: Any, code: int = 0, msg: str = "success"):
