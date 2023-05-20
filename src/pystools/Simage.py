@@ -53,7 +53,7 @@ def gen_noise_img(img_code):
 
     img.save(path)
     # 获取本地图片的base64编码
-    with open(f'logs/code{img_code}.png', 'rb') as f:
+    with open(path, 'rb') as f:
         img = base64.b64encode(f.read())
     # 删除本地图片
     os.remove(path)

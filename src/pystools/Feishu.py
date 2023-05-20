@@ -6,8 +6,8 @@ import requests
 import urllib3 as urllib3
 from requests_toolbelt import MultipartEncoder
 
-from src.pystools.Logger import Loggings
-# from .Logger import Loggings
+# from src.pystools.Logger import Loggings
+from .Logger import Loggings
 
 
 urllib3.disable_warnings()
