@@ -13,3 +13,4 @@
 .idea/
 /src/HMTools.egg-info/
 /src/PysTools.egg-info/
+/tests/

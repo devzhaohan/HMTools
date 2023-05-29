@@ -1,4 +1,5 @@
 import json
+from typing import Dict, Union, Any
 
 from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
@@ -43,7 +44,7 @@ class Cos(object):
         for process_rule in process_rules:
             # 获取imge_file_key的父级目录 例如：test/1.jpg  -> test/ ,imge_file_key= test/1.jpg ,dir_key=test/
             dir_key = imge_file_key[0:imge_file_key.rfind('/') + 1]
-            file_keys.append(dir_key+process_rule.get('fileid'))
+            file_keys.append(dir_key + process_rule.get('fileid'))
 
         if not to_overwrite:
             for process_file_key in file_keys:
@@ -89,7 +90,7 @@ class Cos(object):
 
     #### 文件流简单上传（不支持超过5G的文件，推荐使用下方高级上传接口）
     # 强烈建议您以二进制模式(binary mode)打开文件,否则可能会导致错误
-    def upload_file_from_local_file(self, local_file_path, key,**kwargs):
+    def upload_file_from_local_file(self, local_file_path, key, **kwargs):
         with open(local_file_path, 'rb') as fp:
             response = self.client.put_object(
                 Bucket=self.bucket,
@@ -108,7 +109,7 @@ class Cos(object):
         }
         return resp
 
-    def simple_upload_file(self, file_data, key,bucket=None,domain=None, **kwargs):
+    def simple_upload_file(self, file_data, key, bucket=None, domain=None, **kwargs):
         """
         简单上传
         :param file_data: 文件流、字节流
@@ -156,7 +157,7 @@ class Cos(object):
         url = self.domain + '/' + key
         return url
 
-    def copy_object(self, source_object_key,target_key,source_bucket, source_region):
+    def copy_object(self, source_object_key, target_key, source_bucket, source_region):
         response = self.client.copy(
             Bucket=self.bucket,
             Key=target_key,
@@ -168,14 +169,29 @@ class Cos(object):
         )
         return response
 
-if __name__ == '__main__':
-    cos_secret_id = "xxx"
-    cos_secret_key = "xxx"
-    region = "ap-shanghai"
-    bucket = "xxx"
-    domain = "xxx"
+    def upload_feishu_file(self, feishu, feishu_file_item, oss_key_or_folder, **kwargs) -> Dict[str, Any]:
+        '''
+        上传飞书文件
+        :param oss_key_or_folder: 如果是以/结尾的, 则是文件夹, 否则是文件
+        :param feishu_file_item:
+            {
+                "file_token": "Vl3FbVkvnowlgpxpqsAbBrtFcrd",
+                "name": "飞书.jpeg",
+                "size": 32975,
+                "tmp_url": "https://open.feishu.cn/open-apis/drive/v1/medias/batch_get_tmp_download_url?file_tokens=Vl3FbVk11owlgpxpqsAbBrtFcrd&extra=%7B%22bitablePerm%22%3A%7B%22tableId%22%3A%22tblBJyX6jZteblYv%22%2C%22rev%22%3A90%7D%7D",
+                "type": "image/jpeg",
+                "url": "https://open.feishu.cn/open-apis/drive/v1/medias/Vl3FbVk11owlgpxpqsAbBrtFcrd/download?extra=%7B%22bitablePerm%22%3A%7B%22tableId%22%3A%22tblBJyX6jZteblYv%22%2C%22rev%22%3A90%7D%7D"
+			}
+        :param headers:
+        :param progress_callback:
+        :return:
+        '''
 
-    Cos1 = Cos(cos_secret_id, cos_secret_key, region, bucket, domain)
-    kwargs = {}
-    Cos1.simple_upload_file("file_data", "key", **kwargs)
+        oss_key = oss_key_or_folder
+        if not oss_key.endswith("/"):
+            oss_key = oss_key_or_folder + feishu_file_item['name']
 
+        file_token = feishu_file_item.get('file_token')
+        download_url = feishu.medias_batch_get_tmp_download_url(file_tokens=file_token)
+        tmp_download_url = download_url.get("tmp_download_urls")[0].get('tmp_download_url')
+        return self.upload_file_from_url(tmp_download_url, oss_key, **kwargs)

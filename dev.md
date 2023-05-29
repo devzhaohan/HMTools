@@ -1,4 +1,8 @@
 
+```shell
+source venv/bin/activate
+```
+
 
 ``` bash
 # 读取将pyproject.toml中的版本号，赋值给version变量，用于后续命令中，例如version = "0.0.19"，修改为version = "0.0.20"，这里的version = "0.0.19"，就是读取的pyproject.toml中的版本号，赋值给version变量，用于后续命令中
@@ -20,17 +24,15 @@ rm -rf dist/*
 
 ``` bash
 # 打包
+source venv/bin/activate
 python -m build
 # venv/bin/python -m build
 ``` 
 
 ``` bash
 # 上传
+source venv/bin/activate
 twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
-# venv/bin/python -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/* 
-# 当提示Enter your username: 时，自动输入pypi的账号名
-
-# 当提示Enter your password: 时，输入pypi的账号密码
-
+hesmind 
 ``` 
 
