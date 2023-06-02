@@ -1,5 +1,6 @@
 import hashlib
 import uuid
+import shortuuid
 
 
 class SEncoder:
@@ -14,3 +15,9 @@ class SEncoder:
             return m.hexdigest().upper()
         return m.hexdigest()
 
+    @staticmethod
+    def short_uuid(to_upper=False):
+        unique_id = shortuuid.uuid()
+        if to_upper:
+            return unique_id.upper()
+        return unique_id
