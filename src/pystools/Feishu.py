@@ -9,11 +9,10 @@ from requests_toolbelt import MultipartEncoder
 # from src.pystools.Logger import Loggings
 from .Logger import Loggings
 
-
 urllib3.disable_warnings()
 FEISHU_HTTP_POOL = urllib3.PoolManager(num_pools=1000, cert_reqs='CERT_NONE')
 # 其他请求
-_http_pool = urllib3.PoolManager(num_pools=5000)
+_http_pool = urllib3.PoolManager(num_pools=5000,cert_reqs='CERT_NONE')
 
 # const
 TENANT_ACCESS_TOKEN_URI = "/open-apis/auth/v3/tenant_access_token/internal"
@@ -677,8 +676,30 @@ class Feishu(object):
         res = self.bitable_records(file_token, table_id, record_id=record_id, req_body=data)
         return res
 
+    def send_webhook_msg(self, webhook, msg_type, content):
+        """
+        发送webhook消息
+        :param webhook:
+        :param msg_type:
+        :param content:
+        :return:
+        """
+        req_data = json.dumps({
+            "msg_type": msg_type,
+            "content": content
+        }, ensure_ascii=False).encode('utf-8')
 
+        # curl -X POST -H "Content-Type: application/json" \
+        # 	-d '{"msg_type":"text","content":{"text":"request example"}}' \
+        #   https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxxxxxxxxxxx
+        headers = {'Content-Type': 'application/json'}
+        resp = _http_pool.request(method='POST', url=webhook, body=req_data, headers=headers)
 
+        # resp, check_code, check_status, url=None, req_body=None, headers=None
+        self._check_error_response(resp=resp, check_code=True, check_status=True, url=webhook,req_body=req_data, headers=headers)
+        resp_msg = resp.data.decode('utf-8')
+        resp_dict = json.loads(resp_msg)
+        return resp_dict.get('data')
 
 
 class LarkException(Exception):
@@ -709,19 +730,4 @@ class MyEncoder(json.JSONEncoder):
         if isinstance(obj, bytes):
             return str(obj, encoding='utf-8')
         return json.JSONEncoder.default(self, obj)
-
-
-if __name__ == '__main__':
-    app_id = "xxx"
-    app_secret = "xxx"
-
-    file_token = "xxx"
-    table_id = "xxx"
-
-
-    feishu = Feishu(app_id=app_id, app_secret=app_secret)
-    res = feishu.bitable_records(app_token=file_token,
-                                 table_id=table_id)
-    items = res.get('items')
-
 
