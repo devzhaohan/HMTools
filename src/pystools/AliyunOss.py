@@ -18,7 +18,7 @@ class AliyunOSS(object):
         auth = oss2.Auth(self.key_id, self.key_secret)
         self.bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
 
-    def upload_data(self, data,oss_key,
+    def upload_data(self, data, oss_key,
                     headers=None,
                     progress_callback=None):
 
@@ -46,7 +46,7 @@ class AliyunOSS(object):
         return path
 
     def upload_from_local_file(
-            self,  local_file_path,oss_key,
+            self, local_file_path, oss_key,
             headers=None,
             progress_callback=None
     ) -> str:
@@ -62,7 +62,7 @@ class AliyunOSS(object):
         path = self.domian + "/" + urllib.parse.quote(oss_key)
         return path
 
-    def upload_from_url(self, url, oss_key,  headers=None, progress_callback=None) -> str:
+    def upload_from_url(self, url, oss_key, headers=None, progress_callback=None) -> str:
 
         resp = HTTP_POOL.request(method="GET", url=url)
         if resp.status != 200:
@@ -80,7 +80,8 @@ class AliyunOSS(object):
     def oss_file_exist(self, oss_key) -> dict:
         return self.bucket.object_exists(oss_key)
 
-    def upload_feishu_file(self,feishu, feishu_file_item, oss_key_or_folder, headers=None, progress_callback=None) -> str:
+    def upload_feishu_file(self, feishu, feishu_file_item, oss_key_or_folder, headers=None,
+                           progress_callback=None) -> str:
         '''
         上传飞书文件
         :param oss_key_or_folder: 如果是以/结尾的, 则是文件夹, 否则是文件
@@ -107,4 +108,24 @@ class AliyunOSS(object):
         file_token = feishu_file_item.get('file_token')
         download_url = feishu.medias_batch_get_tmp_download_url(file_tokens=file_token)
         tmp_download_url = download_url.get("tmp_download_urls")[0].get('tmp_download_url')
-        return self.upload_from_url( tmp_download_url, oss_key, headers=headers, progress_callback=progress_callback)
+        return self.upload_from_url(tmp_download_url, oss_key, headers=headers, progress_callback=progress_callback)
+
+    def download_content_bytes(self, key):
+        # 下载文件
+        result = self.bucket.get_object(key)
+        content_got = b''
+        for chunk in result:
+            content_got += chunk
+        return content_got
+
+    def download_to_local(self, key, local_path):
+        res = self.bucket.get_object_to_file(key, local_path)
+        return res
+
+    def download_stream(self, key):
+        object_stream = self.bucket.get_object(key)
+        return object_stream
+        # print(object_stream.read())
+        # # 由于get_object接口返回的是一个stream流，需要执行read()后才能计算出返回Object数据的CRC checksum，因此需要在调用该接口后进行CRC校验。
+        # if object_stream.client_crc != object_stream.server_crc:
+        #     print("The CRC checksum between client and server is inconsistent!")
