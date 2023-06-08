@@ -1,8 +1,9 @@
 import json
-from typing import Dict, Union, Any
+from typing import Dict, Any
 
 from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
+import urllib.parse
 
 
 # 腾讯云的cos操作工具类
@@ -101,7 +102,7 @@ class Cos(object):
                 **kwargs
             )
         # print(response['ETag'])
-        url = self.domain + '/' + key
+        url = self.domain + '/' + urllib.parse.quote(key)
         resp = {
             "url": url,
             "key": key,
@@ -128,7 +129,7 @@ class Cos(object):
             EnableMD5=False,
             **kwargs
         )
-        url = domain + '/' + key
+        url = domain + '/' + urllib.parse.quote(key)
 
         resp = {
             "url": url,
@@ -154,7 +155,7 @@ class Cos(object):
             EnableMD5=enable_md5
         )
         # print(response['ETag'])
-        url = self.domain + '/' + key
+        url = self.domain + '/' + urllib.parse.quote(key)
         return url
 
     def copy_object(self, source_object_key, target_key, source_bucket, source_region):

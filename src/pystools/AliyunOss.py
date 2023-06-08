@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-import datetime
 import oss2
-import os
 import urllib3
 
 HTTP_POOL = urllib3.PoolManager(num_pools=1000)
+import urllib.parse
 
 
 class AliyunOSS(object):
@@ -43,7 +42,7 @@ class AliyunOSS(object):
         """
 
         self.bucket.put_object(oss_key, data, headers, progress_callback)
-        path = self.domian + "/" + oss_key
+        path = self.domian + "/" + urllib.parse.quote(oss_key)
         return path
 
     def upload_from_local_file(
@@ -60,7 +59,7 @@ class AliyunOSS(object):
 
         # 上传
         res = self.bucket.put_object_from_file(oss_key, local_file_path, headers, progress_callback)
-        path = self.domian + "/" + oss_key
+        path = self.domian + "/" + urllib.parse.quote(oss_key)
         return path
 
     def upload_from_url(self, url, oss_key,  headers=None, progress_callback=None) -> str:
