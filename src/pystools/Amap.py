@@ -5,9 +5,10 @@ import urllib3
 
 http = urllib3.PoolManager(cert_reqs='CERT_NONE')
 class Amap:
-    def __init__(self, key,**kwargs):
+    def __init__(self, key, secret=None,**kwargs):
+        self.__dict__.update(locals())
         self.key = key
-        self.secret = kwargs.get('secret',None)
+        self.secret = secret
     def geo(self,address):
         url = f'https://restapi.amap.com/v3/geocode/geo?' \
               f'address={address}' \

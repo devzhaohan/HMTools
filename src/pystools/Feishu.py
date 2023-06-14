@@ -6,13 +6,12 @@ import requests
 import urllib3 as urllib3
 from requests_toolbelt import MultipartEncoder
 
-# from src.pystools.Logger import Loggings
 from .Logger import Loggings
 
 urllib3.disable_warnings()
 FEISHU_HTTP_POOL = urllib3.PoolManager(num_pools=1000, cert_reqs='CERT_NONE')
 # 其他请求
-_http_pool = urllib3.PoolManager(num_pools=5000,cert_reqs='CERT_NONE')
+_http_pool = urllib3.PoolManager(num_pools=5000, cert_reqs='CERT_NONE')
 
 # const
 TENANT_ACCESS_TOKEN_URI = "/open-apis/auth/v3/tenant_access_token/internal"
@@ -82,7 +81,7 @@ lark_host = "https://open.feishu.cn"
 
 class Feishu(object):
     def __init__(self, app_id, app_secret,
-                 print_feishu_log=True, logger=Loggings()):
+                 print_feishu_log=True, logger=Loggings(), **kwargs):
 
         """
         :param app_id:
@@ -90,6 +89,10 @@ class Feishu(object):
         :param lark_host:
 
         """
+        self.__dict__.update(locals())
+        if not app_id or not app_secret:
+            raise ValueError("app_id or app_secret is empty")
+
         self.logger = logger
         self._tenant_access_token = ""
 
@@ -127,7 +130,7 @@ class Feishu(object):
             response_dict = json.loads(resp.data.decode('utf-8'))
             code = response_dict.get("code", -1)
             if code != 0:
-                self.logger.exception("url:{},response:{}".format(url, response_dict))
+                self.logger.error("url:{},response:{}".format(url, response_dict))
                 raise LarkException(code=code, msg=response_dict.get("msg"), url=url, req_body=req_body,
                                     headers=headers)
 
@@ -494,7 +497,7 @@ class Feishu(object):
         response_dict = json.loads(response.content.decode('utf-8'))
         code = response_dict.get("code", -1)
         if code != 0:
-            self.logger.exception("url:{},response:{}".format(url, response_dict))
+            self.logger.error("url:{},response:{}".format(url, response_dict))
             raise LarkException(code=code, msg=response_dict.get("msg"), url=url)
 
         return response_dict.get("data")
@@ -696,7 +699,8 @@ class Feishu(object):
         resp = _http_pool.request(method='POST', url=webhook, body=req_data, headers=headers)
 
         # resp, check_code, check_status, url=None, req_body=None, headers=None
-        self._check_error_response(resp=resp, check_code=True, check_status=True, url=webhook,req_body=req_data, headers=headers)
+        self._check_error_response(resp=resp, check_code=True, check_status=True, url=webhook, req_body=req_data,
+                                   headers=headers)
         resp_msg = resp.data.decode('utf-8')
         resp_dict = json.loads(resp_msg)
         return resp_dict.get('data')
@@ -730,4 +734,3 @@ class MyEncoder(json.JSONEncoder):
         if isinstance(obj, bytes):
             return str(obj, encoding='utf-8')
         return json.JSONEncoder.default(self, obj)
-

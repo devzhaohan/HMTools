@@ -1,13 +1,19 @@
+import hashlib
+
 from MD5util import md5_encode
 
 
 # 乐信短信接口
 class LexinSms:
-    def __init__(self, AppID, AppSecret, accName, accPwd):
-        self.AppID = AppID
-        self.AppSecret = AppSecret
-        self.accName = accName
-        self.accPwd = md5_encode(accPwd, to_upper=True)
+    def __init__(self, app_id, app_secret, acc_name, acc_pwd, **kwargs):
+        self.__dict__.update(locals())
+        self.AppID = app_id
+        self.AppSecret = app_secret
+        self.accName = acc_name
+
+        m = hashlib.md5()
+        m.update(f"{acc_pwd}".encode("utf-8"))
+        self.accPwd = m.hexdigest().upper()
 
     def send(self, aimcodes, content, msgId, extNo):
         accName = self.accName

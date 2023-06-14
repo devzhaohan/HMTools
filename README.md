@@ -4,8 +4,9 @@
 项目地址： https://pypi.org/project/pystools/
 
 ### 安装
-```
-pip install --upgrade pystools
+```shell
+source venv/bin/activate
+pip install -U pystools -i https://pypi.org/simple --trusted-host pypi.org
 ```
 
 

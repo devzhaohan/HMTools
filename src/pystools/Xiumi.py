@@ -12,7 +12,8 @@ http = urllib3.PoolManager()
 
 
 class Xiumi(object):
-    def __init__(self, appid, secret):
+    def __init__(self, appid, secret, **kwargs):
+        self.__dict__.update(locals())
         self.appid = appid
         self.secret = secret
 

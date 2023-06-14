@@ -9,7 +9,8 @@ import urllib.parse
 # 腾讯云的cos操作工具类
 
 class Cos(object):
-    def __init__(self, cos_secret_id, cos_secret_key, region, bucket, domain):
+    def __init__(self, cos_secret_id, cos_secret_key, region, bucket, domain, **kwargs):
+        self.__dict__.update(locals())
         # 1. 设置用户属性, 包括 secret_id, secret_key, region 等。Appid 已在 CosConfig 中移除，请在参数 Bucket 中带上 Appid。Bucket 由 BucketName-Appid 组成
         secret_id = cos_secret_id  # 用户的 SecretId，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参见 https://cloud.tencent.com/document/product/598/37140
         secret_key = cos_secret_key  # 用户的 SecretKey，建议使用子账号密钥，授权遵循最小权限指引，降低使用风险。子账号密钥获取可参见 https://cloud.tencent.com/document/product/598/37140

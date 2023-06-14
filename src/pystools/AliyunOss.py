@@ -7,7 +7,10 @@ import urllib.parse
 
 
 class AliyunOSS(object):
-    def __init__(self, accesskey_id, accesskey_secret, endpoint, bucket, domian):
+    def __init__(self, accesskey_id, accesskey_secret, endpoint, bucket, domian, **kwargs):
+
+
+        self.__dict__.update(locals())
 
         self.key_id = accesskey_id
         self.key_secret = accesskey_secret
