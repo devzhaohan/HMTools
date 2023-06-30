@@ -21,3 +21,13 @@ class SEncoder:
         if to_upper:
             return unique_id.upper()
         return unique_id
+
+    @staticmethod
+    def gen_md5(*args, to_upper=False):
+        m = hashlib.md5()
+        # 将args中的所有值拼接起来
+        for arg in args:
+            m.update(f"{arg}".encode("utf-8"))
+        if to_upper:
+            return m.hexdigest().upper()
+        return m.hexdigest()
