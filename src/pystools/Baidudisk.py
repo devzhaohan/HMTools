@@ -44,7 +44,14 @@ class Baidudisk(object):
         expires_at_str = self.__get_cahced_token("expires_at")
         self.expires_at = int(expires_at_str) if expires_at_str else None
 
-    def __get_cahced_token(self,key ):
+    def __refresh_cached_properties(self):
+        self.device_code = self.__get_cahced_token("device_code")
+        self.access_token = self.__get_cahced_token("access_token")
+        self.refresh_token = self.__get_cahced_token("refresh_token")
+        expires_at_str = self.__get_cahced_token("expires_at")
+        self.expires_at = int(expires_at_str) if expires_at_str else None
+
+    def __get_cahced_token(self,key):
         file = os.path.join(self.cache_path, f"baidunetdisk_{self.tenant}.json")
         if not os.path.exists(file):
             return None
@@ -66,6 +73,7 @@ class Baidudisk(object):
                 property[key] = value
             with open(file, "w") as f:
                 f.write(json.dumps(property, indent=4, ensure_ascii=False))
+        self.__refresh_cached_properties()
 
 
     def is_auth(self):
