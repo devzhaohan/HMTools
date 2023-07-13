@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
+import time
 
 import oss2
 import requests
@@ -9,268 +10,195 @@ import urllib3
 from oss2 import determine_part_size, SizedFileAdapter
 from oss2.models import PartInfo
 
+from .baidu_disk import ApiException
+from .baidu_disk.utils.auth import oauthtoken_devicecode, oauthtoken_devicetoken, oauthtoken_refreshtoken
+from .baidu_disk.utils.fileinfo import filelist
+from .baidu_disk.utils.filemanager import move, copy, rename, delete
+from .baidu_disk.utils.multimedia_file import listall, filemetas
+
 HTTP_POOL = urllib3.PoolManager(cert_reqs='CERT_NONE')
 import urllib.parse
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class AliyunOSS(object):
-    def __init__(self, accesskey_id, accesskey_secret, endpoint, bucket, domian, **kwargs):
+class Baidudisk(object):
+    def __init__(self, app_key, secret_key, **kwargs):
+        # self.__dict__.update(locals())
 
-        self.__dict__.update(locals())
+        self.app_key = kwargs.get("app_key", app_key)
+        self.secret_key = kwargs.get("secret_key", secret_key)
+        self.scope = kwargs.get("scope", "basic netdisk")
 
-        self.key_id = accesskey_id
-        self.key_secret = accesskey_secret
-        self.endpoint = endpoint
-        self.bucket_name = bucket
-        self.domian = domian
+        self.device_code = None
+        self.access_token = None
 
-        auth = oss2.Auth(self.key_id, self.key_secret)
-        self.bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
+        self.refresh_token = None
+        self.expires_at = None
 
-    def upload_data(self, data, oss_key,
-                    headers=None,
-                    progress_callback=None):
+    def __encode_path(self, path, kwargs_key="path",**kwargs):
+        path = kwargs.get(kwargs_key, path)
+        # 对path进行url编码
+        path = urllib.parse.quote(path)
+        if kwargs.get(kwargs_key):
+            kwargs[kwargs_key] = path
+    def __refresh_token(self):
+        if self.expires_at is None or self.expires_at < time.time():
+            raise TokenExpiredException(reason=f"token is expired，please login again")
+        # refresh_token=None, client_id=None, client_secret=None
+        res = oauthtoken_refreshtoken(self.refresh_token, self.app_key, self.secret_key)
+        # {'access_token': '126.2ec0ffa6456c0e5515cbe46e4297f014.Ymbb6R_6H8pWSBVcD2Fit-wGES4JZq7fXHft0SQ.mp6MJQ',
+        #  'expires_in': 2592000,
+        #  'refresh_token': '127.134b97eabe45b32566c3d1303410c824.YQZeqmaL4hSEwkAM41Kt1njmUlo28zYGv9e-4iQ.ScjUbg',
+        #  'scope': 'basic netdisk',
+        #  'session_key': '',
+        #  'session_secret': ''}
+        self.access_token = res["access_token"]
+        self.refresh_token = res["refresh_token"]
+        self.expires_at = time.time() + res["expires_in"]
 
-        """
-        上传一个普通文件。
-        用法 ::
-            >>> bucket.put_object('readme.txt', 'content of readme.txt')
-            >>> with open(u'local_file.txt', 'rb') as f:
-            >>>     AliyunOSS.upload_data('remote_file.txt', f)
-        :param key: 上传到OSS的文件名
-
-        :param data: 待上传的内容。
-        :type data: bytes，str或file-like object
-
-        :param headers: 用户指定的HTTP头部。可以指定Content-Type、Content-MD5、x-oss-meta-开头的头部等
-        :type headers: 可以是dict，建议是oss2.CaseInsensitiveDict
-
-        :param progress_callback: 用户指定的进度回调函数。可以用来实现进度条等功能。参考 :ref:`progress_callback` 。
-
-        :return: :class:`PutObjectResult <oss2.models.PutObjectResult>`
-        """
-
-        self.bucket.put_object(oss_key, data, headers, progress_callback)
-        path = self.domian + "/" + urllib.parse.quote(oss_key)
-        return path
-
-    def upload_from_local_file(
-            self, local_file_path, oss_key,
-            headers=None,
-            progress_callback=None
-    ) -> str:
-        '''
-        将文件上传到oss上
-        :param local_file_path: 要上传的文件
-        :param oss_key: oss上的路径, 要存在oss上的那个文件
-        :return:
-        '''
-
-        # 上传
-        res = self.bucket.put_object_from_file(oss_key, local_file_path, headers, progress_callback)
-        path = self.domian + "/" + urllib.parse.quote(oss_key)
-        return path
-
-    def upload_from_url(self, url, oss_key, headers=None, progress_callback=None) -> str:
-
-        # 从url下载文件
-        response = requests.get(url, stream=True, verify=False)
-        total_size = int(response.headers.get('content-length', 0))
-        filename = None
-        content_disposition = response.headers.get('content-disposition')
-        if content_disposition:
-            match = re.search(r'filename="(.+?)"', content_disposition)
-            if match:
-                filename = match.group(1)
-
-        if not filename:
-            filename = url.rsplit('/', 1)[-1]
-
-        filename = urllib.parse.unquote(filename)
-
-        # 定义不允许的字符正则表达式
-        illegal_chars = r'[\\/:"*?<>|]'
-        # 替换非法字符为空格
-        filename = re.sub(illegal_chars, '_', filename)
-
-        if oss_key.endswith('/'):
-            oss_key = oss_key + filename
-
-        # with open(output_path, 'wb') as f, tqdm(
-        #     total=total_size, unit='iB', unit_scale=True, ncols=80
-        # ) as progress_bar:
-        #     for data in response.iter_content(chunk_size=1024):
-        #         size = f.write(data)
-        #         progress_bar.update(size)
-
-        # 上传文件
-
-        # total_size = os.path.getsize(filename)
-        chunk_size = 1024*100
-        # determine_part_size方法用于确定分片大小。
-        part_size = determine_part_size(total_size, preferred_size=chunk_size)
-
-        # 初始化分片。
-        # 如需在初始化分片时设置文件存储类型，请在init_multipart_upload中设置相关Headers，参考如下。
-        # headers = dict()
-        # 指定该Object的网页缓存行为。
-        # headers['Cache-Control'] = 'no-cache'
-        # 指定该Object被下载时的名称。
-        # headers['Content-Disposition'] = 'oss_MultipartUpload.txt'
-        # 指定该Object的内容编码格式。
-        # headers['Content-Encoding'] = 'utf-8'
-        # 指定过期时间，单位为毫秒。
-        # headers['Expires'] = '1000'
-        # 指定初始化分片上传时是否覆盖同名Object。此处设置为true，表示禁止覆盖同名Object。
-        # headers['x-oss-forbid-overwrite'] = 'true'
-        # 指定上传该Object的每个Part时使用的服务器端加密方式。
-        # headers[OSS_SERVER_SIDE_ENCRYPTION] = SERVER_SIDE_ENCRYPTION_KMS
-        # 指定Object的加密算法。如果未指定此选项，表明Object使用AES256加密算法。
-        # headers[OSS_SERVER_SIDE_DATA_ENCRYPTION] = SERVER_SIDE_ENCRYPTION_KMS
-        # 表示KMS托管的用户主密钥。
-        # headers[OSS_SERVER_SIDE_ENCRYPTION_KEY_ID] = '9468da86-3509-4f8d-a61e-6eab1eac****'
-        # 指定Object的存储类型。
-        # headers['x-oss-storage-class'] = oss2.BUCKET_STORAGE_CLASS_STANDARD
-        # 指定Object的对象标签，可同时设置多个标签。
-        # headers[OSS_OBJECT_TAGGING] = 'k1=v1&k2=v2&k3=v3'
-        # upload_id = bucket.init_multipart_upload(key, headers=headers).upload_id
-        upload_id = self.bucket.init_multipart_upload(oss_key).upload_id
-        parts = []
-
-        # 逐个上传分片。
-        part_number = 1
-        offset = 0
-        consumed_bytes = 0
-        for data in response.iter_content(chunk_size=chunk_size):
-            if offset < total_size:
-
-                # size = f.write(data)
-                # progress_bar.update(size)
-
-
-                # data_bytes = data
-                # rate = int(100 * (float(consumed_bytes) / float(total_size)))
-                # print('\rdownloading {0}% '.format(rate), end='')
-                # sys.stdout.flush()
-
-                num_to_upload = min(part_size, total_size - offset)
-                # 调用SizedFileAdapter(fileobj, size)方法会生成一个新的文件对象，重新计算起始追加位置。
-                #                                key,     upload_id, part_number, data,                   progress_callback
-                # result = self.bucket.upload_part(oss_key, upload_id, part_number, SizedFileAdapter(data, num_to_upload))
-                result = self.bucket.upload_part(oss_key, upload_id, part_number, data)
-                parts.append(PartInfo(part_number, result.etag))
-
-                consumed_bytes += len(data)
-                progress_callback(consumed_bytes, total_size,filename)
-
-
-            offset += num_to_upload
-            part_number += 1
-
-
-        # with open(filename, 'rb') as fileobj:
-        #     part_number = 1
-        #     offset = 0
-        #     while offset < total_size:
-        #         num_to_upload = min(part_size, total_size - offset)
-        #         # 调用SizedFileAdapter(fileobj, size)方法会生成一个新的文件对象，重新计算起始追加位置。
-        #         result = bucket.upload_part(key, upload_id, part_number,
-        #                                     SizedFileAdapter(fileobj, num_to_upload))
-        #         parts.append(PartInfo(part_number, result.etag))
-        #
-        #         offset += num_to_upload
-        #         part_number += 1
-
-        # 完成分片上传。
-        # 如需在完成分片上传时设置相关Headers，请参考如下示例代码。
-        headers = dict()
-        # 设置文件访问权限ACL。此处设置为OBJECT_ACL_PRIVATE，表示私有权限。
-        # headers["x-oss-object-acl"] = oss2.OBJECT_ACL_PRIVATE
-        self.bucket.complete_multipart_upload(oss_key, upload_id, parts, headers=headers)
-        # bucket.complete_multipart_upload(key, upload_id, parts)
-
-        path = self.domian + "/" + urllib.parse.quote(oss_key)
-        return path
-
-
-    # 判断文件在不在
-    def oss_file_exist(self, oss_key) -> dict:
-        return self.bucket.object_exists(oss_key)
-
-    def upload_feishu_file(self, feishu, feishu_file_item, oss_key_or_folder, headers=None,
-                           progress_callback=None) -> str:
-        '''
-        上传飞书文件
-        :param oss_key_or_folder: 如果是以/结尾的, 则是文件夹, 否则是文件
-        :param feishu_file_item:
-            {
-                "file_token": "Vl3FbVkvnowlgpxpqsAbBrtFcrd",
-                "name": "飞书.jpeg",
-                "size": 32975,
-                "tmp_url": "https://open.feishu.cn/open-apis/drive/v1/medias/batch_get_tmp_download_url?file_tokens=Vl3FbVk11owlgpxpqsAbBrtFcrd&extra=%7B%22bitablePerm%22%3A%7B%22tableId%22%3A%22tblBJyX6jZteblYv%22%2C%22rev%22%3A90%7D%7D",
-                "type": "image/jpeg",
-                "url": "https://open.feishu.cn/open-apis/drive/v1/medias/Vl3FbVk11owlgpxpqsAbBrtFcrd/download?extra=%7B%22bitablePerm%22%3A%7B%22tableId%22%3A%22tblBJyX6jZteblYv%22%2C%22rev%22%3A90%7D%7D"
-			}
-        :param headers:
-        :param progress_callback:
-        :return:
-        '''
-
-        oss_key = oss_key_or_folder
-        if oss_key.endswith("/"):
-            oss_key = oss_key_or_folder + feishu_file_item['name']
-        if not headers:
-            headers = {'Content-Type': feishu_file_item['type']}
-
-        file_token = feishu_file_item.get('file_token')
-        download_url = feishu.medias_batch_get_tmp_download_url(file_tokens=file_token)
-        tmp_download_url = download_url.get("tmp_download_urls")[0].get('tmp_download_url')
-        return self.upload_from_url(tmp_download_url, oss_key, headers=headers, progress_callback=progress_callback)
-
-    def download_content_bytes(self, key):
-        # 下载文件
-        result = self.bucket.get_object(key)
-        content_got = b''
-        for chunk in result:
-            content_got += chunk
-        return content_got
-
-    def download_to_local(self, key, local_path):
-        res = self.bucket.get_object_to_file(key, local_path)
+    def show_qr(self):
+        # 1.扫码登录
+        res = oauthtoken_devicecode(self.app_key)
+        # {'device_code': '0993010f33712ad7ff2de4ff76db2f2e',
+        #  'expires_in': 300,
+        #  'interval': 5,
+        #  'qrcode_url': 'https://openapi.baidu.com/device/qrcode/6ad8f3eb08e1f9ceb1e3d9958c6e9807/bhaq4ptd',
+        #  'user_code': 'bhaq4ptd',
+        #  'verification_url': 'https://openapi.baidu.com/device'}
+        device_code = res["device_code"]
+        self.device_code = device_code
         return res
 
-    def download_stream(self, key):
-        object_stream = self.bucket.get_object(key)
-        return object_stream
-        # print(object_stream.read())
-        # # 由于get_object接口返回的是一个stream流，需要执行read()后才能计算出返回Object数据的CRC checksum，因此需要在调用该接口后进行CRC校验。
-        # if object_stream.client_crc != object_stream.server_crc:
-        #     print("The CRC checksum between client and server is inconsistent!")
-
-    def list_obj(self, **kwargs):
-        bucket = kwargs.get("bucket")
-        if not bucket:
-            bucket = self.bucket
-        kwargs.pop("bucket")
-        files = []
-        for obj in oss2.ObjectIterator(bucket, **kwargs):
-            files.append(obj)
-        return files
-
-    def list_files(self, prefix, delimiter='/', marker='', bucket=None):
-        """
-        :param marker: 文件后缀
-        :param prefix: 文件前缀，'fun/'
-        :param delimiter:
-        :param bucket:
-        :return:
-        """
-        params = {
-            "bucket": bucket,
-            "delimiter": delimiter,
-            "prefix": prefix,
-            "marker": marker
+    def auth_by_qr(self):
+        p = {
+            "code": self.device_code,
+            "app_key": self.app_key,
+            "secret_key": self.secret_key
         }
-        objects = self.list_obj(**params)
-        return objects
+        res = oauthtoken_devicetoken(**p)
+        # {'access_token': '126.6f1888128811faed7a5a45b19d079d25.YBgHQjzHXZ8h9iS8RnQWSoTIHJSVq6zQurCOA4S.LpU-Rw',
+        #  'expires_in': 2592000,
+        #  'refresh_token': '127.5bc340f665c2c68e1af7a72f12932054.YsjmXD3Dhe55NRkMBLxyFLUWgNKYIq0SJ0f6Qk5.7Cz82A',
+        #  'scope': 'basic netdisk',
+        #  'session_key': '',
+        #  'session_secret': ''}
+        self.access_token = res["access_token"]
+        self.refresh_token = res["refresh_token"]
+        self.expires_at = int(time.time()) * 1000 + res["expires_in"]
+        return res
+
+    def filelist(self, dir="/", folder="1",  start=0, limit=1000, order="time", desc=1, web="1",**kwargs):
+        """
+        :param dir	需要list的目录，以/开头的绝对路径, 默认为/
+                    路径包含中文时需要UrlEncode编码
+                    给出的示例的路径是/测试目录的UrlEncode编码
+        :param folder	是否只返回文件夹，0 返回所有，1 只返回文件夹，且属性只返回path字段
+        :param web	    值为1时，返回dir_empty属性和缩略图数据
+        :param start	起始位置，从0开始
+        :param limit	查询数目，默认为1000，建议最大不超过1000
+        :param order	排序字段：默认为name；
+                time表示先按文件类型排序，后按修改时间排序；
+                name表示先按文件类型排序，后按文件名称排序；(注意，此处排序是按字符串排序的，如果用户有剧集排序需求，需要自行开发)
+                size表示先按文件类型排序，后按文件大小排序。
+        :param desc	默认为升序，设置为1实现降序 （注：排序的对象是当前目录下所有文件，不是当前分页下的文件）
+        :param showempty	是否返回dir_empty属性，0 不返回，1 返回
+
+        :return:
+            {'errno': 0,
+             'guid': 0,
+             'guid_info': '',
+             'list': [
+                      {'dir_empty': 1,
+                       'fs_id': 0,
+                       'path': '/betterme/0200董晨宇的传播学课_L6798',
+                       'share': 0}
+                      ],
+             'request_id': 9105102554915445232}
+        """
+        self.__encode_path(dir,"dir", **kwargs)
+        self.__refresh_token()
+        # dir="/", folder="0", start="0", limit=2, order="time", desc=1, web="web"
+        return filelist(self.access_token, dir, folder, str(start), limit, order, desc, web, **kwargs)
+
+    def filelist_by_page(self, dir="/", folder="1", page_no=1, page_size=1000, order="name", desc=0, web="1",**kwargs):
+        """
+        :param dir: 需要list的目录，以/开头的绝对路径, 默认为/
+                    路径包含中文时需要UrlEncode编码
+                    给出的示例的路径是/测试目录的UrlEncode编码
+        :param folder: 是否只返回文件夹，0 返回所有，1 只返回文件夹，且属性只返回path字段
+        :param page_no: 页码
+        :param page_size: 每页数量
+        :param order: 排序字段：默认为name；
+        :param desc: 默认为升序，设置为1实现降序 （注：排序的对象是当前目录下所有文件，不是当前分页下的文件）
+        :param web: 值为1时，返回dir_empty属性和缩略图数据
+        :return:
+            {'errno': 0,
+             'guid': 0,
+             'guid_info': '',
+             'list': [
+                      {'dir_empty': 1,
+                       'fs_id': 0,
+                       'path': '/betterme/0200董晨宇的传播学课_L6798',
+                       'share': 0}
+                      ],
+             'request_id': 9105102554915445232}
+        """
+        start = (page_no - 1) * page_size
+        limit = page_size
+        return self.filelist(dir, folder, start, limit, order, desc,web, **kwargs)
+
+
+    def listall(self, path="/", recursion=1, web="1", start=0, limit=2, order="time", desc=1, **kwargs):
+        self.__encode_path(path, **kwargs)
+        self.__refresh_token()
+        return listall(self.access_token, path, recursion, web, start, limit, order, desc, **kwargs)
+
+    def filemetas(self, fsids, thumb=1, extra=1, dlink=1, needmedia=1, **kwargs):
+        self.__refresh_token()
+        return filemetas(self.access_token, fsids, thumb, extra, dlink, needmedia, **kwargs)
+
+    def move(self, filelist, ondup="overwrite", _async=1, **kwargs):
+        # filelist = '[{"path":"/test/123456.docx","dest":"/test/abc","newname":"123456.docx","ondup":"overwrite"}]'
+        self.__refresh_token()
+        # filelist, ondup="overwrite",_async=1
+        return move(self.access_token, filelist, ondup, _async, **kwargs)
+
+    def copy(self, filelist, _async=1, **kwargs):
+        # filelist = '[{"path":"/test/123456.docx","dest":"/test/abc","newname":"123.docx","ondup":"overwrite"}]'
+        self.__refresh_token()
+        return copy(self.access_token, filelist, _async, **kwargs)
+
+    def rename(self, filelist, ondup="overwrite", _async=1, **kwargs):
+        # filelist = '[{"path":"/test/123456.docx","newname":"123.docx"}]'  # str | filelist
+        self.__refresh_token()
+        return rename(self.access_token, filelist, ondup, _async, **kwargs)
+
+    def rename1(self, path, newname, ondup="overwrite", _async=1, **kwargs):
+        # filelist = '[{"path":"/test/123456.docx","newname":"123.docx"}]'  # str | filelist
+        self.__encode_path(path, **kwargs)
+
+        filelist = [{"path": path, "newname": newname}]
+        return self.rename(self.access_token, filelist, ondup, _async, **kwargs)
+
+    def delete(self, filelist, ondup="overwrite", _async=1, **kwargs):
+        # filelist = '[{"path":"/test/123456.docx"}]'  # str | filelist
+        self.__refresh_token()
+        return delete(self.access_token, filelist, ondup, _async=1, **kwargs)
+
+    def delete1(self, path, ondup="overwrite", _async=1, **kwargs):
+
+        filelist = [{"path": path}]
+        return self.delete(self.access_token, filelist, ondup, _async=1, **kwargs)
+
+
+class TokenExpiredException(ApiException):
+    """
+    class UnauthorizedException
+    """
+
+    def __init__(self, status=None, reason=None, http_resp=None):
+        """
+        __init__
+        """
+        super(TokenExpiredException, self).__init__(status, reason, http_resp)

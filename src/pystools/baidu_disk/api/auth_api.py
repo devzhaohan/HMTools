@@ -11,8 +11,8 @@
 import re  # noqa: F401
 import sys  # noqa: F401
 
-from utils.baidu_disk_openapi.api_client import ApiClient, Endpoint as _Endpoint
-from utils.baidu_disk_openapi.model_utils import (  # noqa: F401
+from ..api_client import ApiClient, Endpoint as _Endpoint
+from ..model_utils import (  # noqa: F401
     check_allowed_values,
     check_validations,
     date,
@@ -21,10 +21,12 @@ from utils.baidu_disk_openapi.model_utils import (  # noqa: F401
     none_type,
     validate_and_convert_types
 )
-from utils.baidu_disk_openapi.model.oauth_token_authorization_code_response import OauthTokenAuthorizationCodeResponse
-from utils.baidu_disk_openapi.model.oauth_token_device_code_response import OauthTokenDeviceCodeResponse
-from utils.baidu_disk_openapi.model.oauth_token_device_token_response import OauthTokenDeviceTokenResponse
-from utils.baidu_disk_openapi.model.oauth_token_refresh_token_response import OauthTokenRefreshTokenResponse
+from ..model.oauth_token_authorization_code_response import OauthTokenAuthorizationCodeResponse
+from ..model.oauth_token_device_code_response import OauthTokenDeviceCodeResponse
+from ..model.oauth_token_device_token_response import OauthTokenDeviceTokenResponse
+from ..model.oauth_token_refresh_token_response import OauthTokenRefreshTokenResponse
+
+
 
 
 class AuthApi(object):

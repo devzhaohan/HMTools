@@ -18,7 +18,7 @@ sed -i "" "s/version = .*/version = \"$version\"/g" pyproject.toml
 
 echo "new version: $version"
 
-#删除dist目录中老版本号的文件
+# 删除dist目录中老版本号的文件
 rm -rf dist/*
 ``` 
 

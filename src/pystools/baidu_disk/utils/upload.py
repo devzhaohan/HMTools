@@ -1,4 +1,4 @@
-# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
     xpan upload
     include:
@@ -8,18 +8,20 @@
 """
 import os
 import sys
+
+from .. import ApiClient, ApiException
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 from pprint import pprint
-from openapi_client.api import fileupload_api
-import openapi_client
+from ..api import fileupload_api
 
 def precreate():
     """
     precreate
     """
     #    Enter a context with an instance of the API client
-    with openapi_client.ApiClient() as api_client:
+    with ApiClient() as api_client:
         # Create an instance of the API class
         api_instance = fileupload_api.FileuploadApi(api_client)
         access_token = "123.56c5d1f8eedf1f9404c547282c5dbcf4.YmmjpAlsjUFbPly3mJizVYqdfGDLsBaY5pyg3qL.a9IIIQ"  # str |
@@ -36,7 +38,7 @@ def precreate():
             api_response = api_instance.xpanfileprecreate(
                 access_token, path, isdir, size, autoinit, block_list, rtype=rtype)
             pprint(api_response)
-        except openapi_client.ApiException as e:
+        except ApiException as e:
             print("Exception when calling FileuploadApi->xpanfileprecreate: %s\n" % e)
 
 
@@ -45,7 +47,7 @@ def upload():
     upload
     """
     # Enter a context with an instance of the API client
-    with openapi_client.ApiClient() as api_client:
+    with ApiClient() as api_client:
         # Create an instance of the API class
         api_instance = fileupload_api.FileuploadApi(api_client)
         access_token = "123.56c5d1f8eedf1f9404c547282c5dbcf4.YmmjpAlsjUFbPly3mJizVYqdfGDLsBaY5pyg3qL.a9IIIQ"  # str |
@@ -65,7 +67,7 @@ def upload():
             api_response = api_instance.pcssuperfile2(
                 access_token, partseq, path, uploadid, type, file=file)
             pprint(api_response)
-        except openapi_client.ApiException as e:
+        except ApiException as e:
             print("Exception when calling FileuploadApi->pcssuperfile2: %s\n" % e)
 
 
@@ -74,7 +76,7 @@ def create():
     create
     """
     # Enter a context with an instance of the API client
-    with openapi_client.ApiClient() as api_client:
+    with ApiClient() as api_client:
         # Create an instance of the API class
         api_instance = fileupload_api.FileuploadApi(api_client)
         access_token = "123.56c5d1f8eedf1f9404c547282c5dbcf4.YmmjpAlsjUFbPly3mJizVYqdfGDLsBaY5pyg3qL.a9IIIQ"  # str |
@@ -91,7 +93,7 @@ def create():
             api_response = api_instance.xpanfilecreate(
                 access_token, path, isdir, size, uploadid, block_list, rtype=rtype)
             pprint(api_response)
-        except openapi_client.ApiException as e:
+        except ApiException as e:
             print("Exception when calling FileuploadApi->xpanfilecreate: %s\n" % e)
 
 

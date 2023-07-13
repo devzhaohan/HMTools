@@ -1,4 +1,4 @@
-# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
     xpan
 
@@ -20,11 +20,10 @@ import typing
 from urllib.parse import quote
 from urllib3.fields import RequestField
 
-
-from utils.baidu_disk_openapi import rest
-from utils.baidu_disk_openapi.configuration import Configuration
-from utils.baidu_disk_openapi.exceptions import ApiTypeError, ApiValueError, ApiException
-from utils.baidu_disk_openapi.model_utils import (
+from . import rest
+from .configuration import Configuration
+from .exceptions import ApiTypeError, ApiValueError, ApiException
+from .model_utils import (
     ModelNormal,
     ModelSimple,
     ModelComposed,

@@ -1,6 +1,6 @@
 [project]
 name = "pystools"
-version = "0.0.43"
+version = "0.0.45"
 authors = [
   { name="木坦坦", email="devzhao@126.com" },
 ]
@@ -22,7 +22,8 @@ dependencies = [
     "oss2",
     "urllib3",
     "shortuuid",
-    "webdriver-manager"
+    "webdriver-manager",
+    "python-dateutil"
 #    "Pillow-SIMD"
 
 ]

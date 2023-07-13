@@ -67,3 +67,26 @@ class SEncoder:
             # 把字符添加到 lid 中
             lid += char
         return lid
+
+    @staticmethod
+    def encode_sign(param_dict: Any, nonce: str):
+        # 将param_dict中的key按照字母排序，如果只处理第一层的key，然后拼接成字符串 例如：a=1&b=2&c=3
+        param_str = ""
+        if isinstance(param_dict, dict):
+            for key in sorted(param_dict.keys()):
+                value = param_dict[key]
+                value_str = value
+                if not isinstance(value, str):
+                    value_str = str(value)
+                    if value_str == "None":
+                        value_str = "null"
+                param_str += f"{key}={value_str}&"
+            param_str = param_str[:-1]
+        # 然后将param_gen_sign.nonce拼接到字符串后面
+        param_str += str(nonce)
+        # 然后对字符串进行sha256加密
+        import hashlib
+        m = hashlib.sha256()
+        m.update(param_str.encode("utf-8"))
+        sign = m.hexdigest()
+        return {"sign": sign, "param_str": param_str}

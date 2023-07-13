@@ -1,4 +1,4 @@
-# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
     xpan
 
@@ -20,7 +20,7 @@ import tempfile
 
 from dateutil.parser import parse
 
-from utils.baidu_disk_openapi.exceptions import (
+from .exceptions import (
     ApiKeyError,
     ApiAttributeError,
     ApiTypeError,

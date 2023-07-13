@@ -1,4 +1,4 @@
-# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
     xpan
 
@@ -18,12 +18,11 @@ from urllib.parse import urlencode
 from urllib.parse import urlparse
 from urllib.request import proxy_bypass_environment
 
-# from urllib.request import proxy_bypass_environment
 import urllib3
 import ipaddress
 
-from utils.baidu_disk_openapi.exceptions import ApiException, UnauthorizedException, ForbiddenException
-from utils.baidu_disk_openapi.exceptions import NotFoundException, ServiceException, ApiValueError
+from .exceptions import ApiException, UnauthorizedException, ForbiddenException
+from .exceptions import NotFoundException, ServiceException, ApiValueError
 
 
 logger = logging.getLogger(__name__)
