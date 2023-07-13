@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+import os
 import re
 import sys
 import time
@@ -13,7 +15,7 @@ from oss2.models import PartInfo
 from .baidu_disk import ApiException
 from .baidu_disk.utils.auth import oauthtoken_devicecode, oauthtoken_devicetoken, oauthtoken_refreshtoken
 from .baidu_disk.utils.fileinfo import filelist
-from .baidu_disk.utils.filemanager import move, copy, rename, delete
+from .baidu_disk.utils.filemanager import move, copy, rename, delete, create_folder
 from .baidu_disk.utils.multimedia_file import listall, filemetas
 
 HTTP_POOL = urllib3.PoolManager(cert_reqs='CERT_NONE')
@@ -23,27 +25,62 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Baidudisk(object):
-    def __init__(self, app_key, secret_key, **kwargs):
+    def __init__(self, app_key, secret_key, tenant=None,cache_path = "./tmp", **kwargs):
         # self.__dict__.update(locals())
 
+        self.cache_path = kwargs.get("cash_path", cache_path)
+        # 如果cache_path不存在，创建cache_path
+        if not os.path.exists(self.cache_path):
+            os.makedirs(self.cache_path)
+
+        self.tenant = tenant
         self.app_key = kwargs.get("app_key", app_key)
         self.secret_key = kwargs.get("secret_key", secret_key)
         self.scope = kwargs.get("scope", "basic netdisk")
 
-        self.device_code = None
-        self.access_token = None
+        self.device_code = self.__get_cahced_token("device_code")
+        self.access_token = self.__get_cahced_token("access_token")
+        self.refresh_token = self.__get_cahced_token("refresh_token")
+        expires_at_str = self.__get_cahced_token("expires_at")
+        self.expires_at = int(expires_at_str) if expires_at_str else None
 
-        self.refresh_token = None
-        self.expires_at = None
+    def __get_cahced_token(self,key ):
+        file = os.path.join(self.cache_path, f"baidunetdisk_{self.tenant}.json")
+        if not os.path.exists(file):
+            return None
+        else:
+            with open(file, "r") as f:
+                property = json.loads(f.read())
+                return property.get(key, None)
 
-    def __encode_path(self, path, kwargs_key="path",**kwargs):
-        path = kwargs.get(kwargs_key, path)
-        # 对path进行url编码
-        path = urllib.parse.quote(path)
-        if kwargs.get(kwargs_key):
-            kwargs[kwargs_key] = path
+    def __cahce_property(self, key, value):
+        file = os.path.join(self.cache_path, f"baidunetdisk_{self.tenant}.json")
+        property = {}
+        if not os.path.exists(file):
+            property[key] = value
+            with open(file, "w") as f:
+                f.write(json.dumps(property, indent=4, ensure_ascii=False))
+        else:
+            with open(file, "r") as f:
+                property = json.loads(f.read())
+                property[key] = value
+            with open(file, "w") as f:
+                f.write(json.dumps(property, indent=4, ensure_ascii=False))
+
+
+    def is_auth(self):
+        # 如果expires_at大于当前时间，说明token还有效，self.is_auth = True
+        now = int(time.time())
+        # print("expires_at", self.expires_at, "now", now,  self.expires_at-now)
+        is_auth = self.expires_at is not None and self.expires_at > int(time.time())
+        return is_auth
+
+
     def __refresh_token(self):
-        if self.expires_at is None or self.expires_at < time.time():
+        # 刷新token
+        now = int(time.time())
+        # print("expires_at", self.expires_at, "now", now, self.expires_at - now)
+        if self.expires_at is None or self.expires_at < int(time.time()):
             raise TokenExpiredException(reason=f"token is expired，please login again")
         # refresh_token=None, client_id=None, client_secret=None
         res = oauthtoken_refreshtoken(self.refresh_token, self.app_key, self.secret_key)
@@ -53,9 +90,13 @@ class Baidudisk(object):
         #  'scope': 'basic netdisk',
         #  'session_key': '',
         #  'session_secret': ''}
-        self.access_token = res["access_token"]
-        self.refresh_token = res["refresh_token"]
-        self.expires_at = time.time() + res["expires_in"]
+        # self.access_token = res["access_token"]
+        self.__cahce_property("access_token",res["access_token"])
+        # self.refresh_token = res["refresh_token"]
+        self.__cahce_property("refresh_token",res["refresh_token"])
+        # self.expires_at = time.time() + res["expires_in"]
+        self.__cahce_property("expires_at",time.time() + res["expires_in"])
+
 
     def show_qr(self):
         # 1.扫码登录
@@ -66,8 +107,7 @@ class Baidudisk(object):
         #  'qrcode_url': 'https://openapi.baidu.com/device/qrcode/6ad8f3eb08e1f9ceb1e3d9958c6e9807/bhaq4ptd',
         #  'user_code': 'bhaq4ptd',
         #  'verification_url': 'https://openapi.baidu.com/device'}
-        device_code = res["device_code"]
-        self.device_code = device_code
+        self.__cahce_property("device_code",res["device_code"])
         return res
 
     def auth_by_qr(self):
@@ -83,12 +123,15 @@ class Baidudisk(object):
         #  'scope': 'basic netdisk',
         #  'session_key': '',
         #  'session_secret': ''}
-        self.access_token = res["access_token"]
-        self.refresh_token = res["refresh_token"]
-        self.expires_at = int(time.time()) * 1000 + res["expires_in"]
+        # self.access_token = res["access_token"]
+        self.__cahce_property("access_token",res["access_token"])
+        # self.refresh_token = res["refresh_token"]
+        self.__cahce_property("refresh_token",res["refresh_token"])
+        # self.expires_at = int(time.time())  + res["expires_in"]
+        self.__cahce_property("expires_at",int(time.time()) + res["expires_in"])
         return res
 
-    def filelist(self, dir="/", folder="1",  start=0, limit=1000, order="time", desc=1, web="1",**kwargs):
+    def filelist(self, dir="/", folder="1", start=0, limit=1000, order="time", desc=1, web="1", **kwargs):
         """
         :param dir	需要list的目录，以/开头的绝对路径, 默认为/
                     路径包含中文时需要UrlEncode编码
@@ -116,12 +159,12 @@ class Baidudisk(object):
                       ],
              'request_id': 9105102554915445232}
         """
-        self.__encode_path(dir,"dir", **kwargs)
+        self.__encode_path(dir, "dir", **kwargs)
         self.__refresh_token()
         # dir="/", folder="0", start="0", limit=2, order="time", desc=1, web="web"
         return filelist(self.access_token, dir, folder, str(start), limit, order, desc, web, **kwargs)
 
-    def filelist_by_page(self, dir="/", folder="1", page_no=1, page_size=1000, order="name", desc=0, web="1",**kwargs):
+    def filelist_by_page(self, dir="/", folder="1", page_no=1, page_size=1000, order="name", desc=0, web="1", **kwargs):
         """
         :param dir: 需要list的目录，以/开头的绝对路径, 默认为/
                     路径包含中文时需要UrlEncode编码
@@ -146,8 +189,7 @@ class Baidudisk(object):
         """
         start = (page_no - 1) * page_size
         limit = page_size
-        return self.filelist(dir, folder, start, limit, order, desc,web, **kwargs)
-
+        return self.filelist(dir, folder, start, limit, order, desc, web, **kwargs)
 
     def listall(self, path="/", recursion=1, web="1", start=0, limit=2, order="time", desc=1, **kwargs):
         self.__encode_path(path, **kwargs)
@@ -176,10 +218,28 @@ class Baidudisk(object):
 
     def rename1(self, path, newname, ondup="overwrite", _async=1, **kwargs):
         # filelist = '[{"path":"/test/123456.docx","newname":"123.docx"}]'  # str | filelist
-        self.__encode_path(path, **kwargs)
-
         filelist = [{"path": path, "newname": newname}]
-        return self.rename(self.access_token, filelist, ondup, _async, **kwargs)
+        return self.rename(filelist, ondup, _async, **kwargs)
+
+    def rename_folder(self, path, new_path, ondup="overwrite", _async=1, **kwargs):
+        """
+        将旧的文件夹中所有文件移动到新的文件夹中，然后删除旧的文件夹
+        :param path:
+        :param new_path:
+        :param ondup:
+        :param _async:
+        :param kwargs:
+        :return:
+        """
+        # filelist = '[{"path":"/test/123456.docx","newname":"123.docx"}]'  # str | filelist
+        self.__refresh_token()
+        return rename(self.access_token, filelist, ondup, _async, **kwargs)
+
+    def create_folder(self, path, local_ctime=None, local_mtime=None, **kwargs):
+        self.__encode_path(path, **kwargs)
+        self.__refresh_token()
+        return create_folder(self.access_token, path, isdir=1, rtype=0, local_ctime=local_ctime,
+                             local_mtime=local_mtime, mode=1, **kwargs)
 
     def delete(self, filelist, ondup="overwrite", _async=1, **kwargs):
         # filelist = '[{"path":"/test/123456.docx"}]'  # str | filelist
