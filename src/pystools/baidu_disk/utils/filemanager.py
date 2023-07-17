@@ -28,6 +28,9 @@ def move(access_token,  filelist, ondup="overwrite",_async=1,**kwargs):
     filelist = kwargs.get("filelist", filelist)
     ondup = kwargs.get("ondup", ondup)
 
+    if isinstance(filelist, list):
+        filelist = json.dumps(filelist)
+
     # Enter a context with an instance of the API client
     with ApiClient() as api_client:
         # Create an instance of the API class
@@ -58,6 +61,8 @@ def copy(access_token,  filelist, _async=1,**kwargs):
     access_token = kwargs.get("access_token", access_token)
     _async = kwargs.get("_async", _async)
     filelist = kwargs.get("filelist", filelist)
+    if isinstance(filelist, list):
+        filelist = json.dumps(filelist)
 
     # Enter a context with an instance of the API client
     with ApiClient() as api_client:
@@ -119,6 +124,8 @@ def delete(access_token,  filelist, ondup="overwrite",_async=1,**kwargs):
     filelist = kwargs.get("filelist", filelist)
     ondup = kwargs.get("ondup", ondup)
 
+    if type(filelist) == list:
+        filelist = json.dumps(filelist)
     with ApiClient() as api_client:
         # Create an instance of the API class
         api_instance = filemanager_api.FilemanagerApi(api_client)

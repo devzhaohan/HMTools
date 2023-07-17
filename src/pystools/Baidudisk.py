@@ -79,18 +79,23 @@ class Baidudisk(object):
     def is_auth(self):
         # 如果expires_at大于当前时间，说明token还有效，self.is_auth = True
         now = int(time.time())
-        # print("expires_at", self.expires_at, "now", now,  self.expires_at-now)
+        print("expires_at", self.expires_at, "now", now,  self.expires_at-now)
         is_auth = self.expires_at is not None and self.expires_at > int(time.time())
         return is_auth
 
 
-    def __refresh_token(self):
+    def __check_token(self):
         # 刷新token
         now = int(time.time())
         # print("expires_at", self.expires_at, "now", now, self.expires_at - now)
-        if self.expires_at is None or self.expires_at < int(time.time()):
+        if self.expires_at is None:
             raise TokenExpiredException(reason=f"token is expired，please login again")
+        if self.expires_at < int(time.time()):
+            self.__refresh_token()
         # refresh_token=None, client_id=None, client_secret=None
+
+
+    def __refresh_token(self):
         res = oauthtoken_refreshtoken(self.refresh_token, self.app_key, self.secret_key)
         # {'access_token': '126.2ec0ffa6456c0e5515cbe46e4297f014.Ymbb6R_6H8pWSBVcD2Fit-wGES4JZq7fXHft0SQ.mp6MJQ',
         #  'expires_in': 2592000,
@@ -99,12 +104,11 @@ class Baidudisk(object):
         #  'session_key': '',
         #  'session_secret': ''}
         # self.access_token = res["access_token"]
-        self.__cahce_property("access_token",res["access_token"])
+        self.__cahce_property("access_token", res["access_token"])
         # self.refresh_token = res["refresh_token"]
-        self.__cahce_property("refresh_token",res["refresh_token"])
+        self.__cahce_property("refresh_token", res["refresh_token"])
         # self.expires_at = time.time() + res["expires_in"]
-        self.__cahce_property("expires_at",time.time() + res["expires_in"])
-
+        self.__cahce_property("expires_at", time.time() + res["expires_in"])
 
     def show_qr(self):
         # 1.扫码登录
@@ -167,8 +171,7 @@ class Baidudisk(object):
                       ],
              'request_id': 9105102554915445232}
         """
-        self.__encode_path(dir, "dir", **kwargs)
-        self.__refresh_token()
+        self.__check_token()
         # dir="/", folder="0", start="0", limit=2, order="time", desc=1, web="web"
         return filelist(self.access_token, dir, folder, str(start), limit, order, desc, web, **kwargs)
 
@@ -201,27 +204,41 @@ class Baidudisk(object):
 
     def listall(self, path="/", recursion=1, web="1", start=0, limit=2, order="time", desc=1, **kwargs):
         self.__encode_path(path, **kwargs)
-        self.__refresh_token()
+        self.__check_token()
         return listall(self.access_token, path, recursion, web, start, limit, order, desc, **kwargs)
 
     def filemetas(self, fsids, thumb=1, extra=1, dlink=1, needmedia=1, **kwargs):
-        self.__refresh_token()
+        self.__check_token()
         return filemetas(self.access_token, fsids, thumb, extra, dlink, needmedia, **kwargs)
 
     def move(self, filelist, ondup="overwrite", _async=1, **kwargs):
         # filelist = '[{"path":"/test/123456.docx","dest":"/test/abc","newname":"123456.docx","ondup":"overwrite"}]'
-        self.__refresh_token()
+        self.__check_token()
         # filelist, ondup="overwrite",_async=1
         return move(self.access_token, filelist, ondup, _async, **kwargs)
 
+    def move1(self, path, dest, newname=None, ondup="overwrite", _async=1, **kwargs):
+        # filelist = '[{"path":"/test/123456.docx","dest":"/test/abc","newname":"123456.docx","ondup":"overwrite"}]'
+        if newname is None:
+            newname = os.path.basename(path)
+        filelist = [{"path": path, "dest": dest, "newname": newname, "ondup": ondup}]
+        return self.move(filelist, ondup, _async, **kwargs)
+
     def copy(self, filelist, _async=1, **kwargs):
         # filelist = '[{"path":"/test/123456.docx","dest":"/test/abc","newname":"123.docx","ondup":"overwrite"}]'
-        self.__refresh_token()
+        self.__check_token()
         return copy(self.access_token, filelist, _async, **kwargs)
+
+    def copy1(self, path, dest, newname=None, ondup="overwrite", _async=1, **kwargs):
+        # filelist = '[{"path":"/test/123456.docx","dest":"/test/abc","newname":"123.docx","ondup":"overwrite"}]'
+        if newname is None:
+            newname = os.path.basename(path)
+        filelist = [{"path": path, "dest": dest, "newname": newname, "ondup": ondup}]
+        return self.copy(filelist, _async, **kwargs)
 
     def rename(self, filelist, ondup="overwrite", _async=1, **kwargs):
         # filelist = '[{"path":"/test/123456.docx","newname":"123.docx"}]'  # str | filelist
-        self.__refresh_token()
+        self.__check_token()
         return rename(self.access_token, filelist, ondup, _async, **kwargs)
 
     def rename1(self, path, newname, ondup="overwrite", _async=1, **kwargs):
@@ -240,24 +257,24 @@ class Baidudisk(object):
         :return:
         """
         # filelist = '[{"path":"/test/123456.docx","newname":"123.docx"}]'  # str | filelist
-        self.__refresh_token()
+        self.__check_token()
         return rename(self.access_token, filelist, ondup, _async, **kwargs)
 
     def create_folder(self, path, local_ctime=None, local_mtime=None, **kwargs):
         self.__encode_path(path, **kwargs)
-        self.__refresh_token()
+        self.__check_token()
         return create_folder(self.access_token, path, isdir=1, rtype=0, local_ctime=local_ctime,
                              local_mtime=local_mtime, mode=1, **kwargs)
 
     def delete(self, filelist, ondup="overwrite", _async=1, **kwargs):
         # filelist = '[{"path":"/test/123456.docx"}]'  # str | filelist
-        self.__refresh_token()
-        return delete(self.access_token, filelist, ondup, _async=1, **kwargs)
+        self.__check_token()
+        return delete(self.access_token, filelist, ondup, _async, **kwargs)
 
     def delete1(self, path, ondup="overwrite", _async=1, **kwargs):
 
         filelist = [{"path": path}]
-        return self.delete(self.access_token, filelist, ondup, _async=1, **kwargs)
+        return self.delete(filelist, ondup, _async, **kwargs)
 
 
 class TokenExpiredException(ApiException):

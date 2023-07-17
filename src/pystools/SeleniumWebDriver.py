@@ -22,23 +22,22 @@ def get_driver(chrome_options_args=None, proxy_ip=None, ):
                                "--no-sandbox",  # 以沙盒模式运行
                                "--disable-dev-shm-usage"  # 禁用/dev/shm使用
                                ]
+    chrome_options = webdriver.ChromeOptions()
     if proxy_ip:
         # 去掉proxy_ip中的空白字符
         proxy_ip = "".join(proxy_ip.split())
-
-    chrome_options = webdriver.ChromeOptions()
-    for option in chrome_options_args:
-        chrome_options.add_argument(option)
-
-    # 创建DesiredCapabilities对象
-    capabilities = webdriver.DesiredCapabilities.CHROME
-    # 创建代理对象
-    if proxy_ip:
         proxy = Proxy()
         proxy.proxy_type = ProxyType.MANUAL
         proxy.http_proxy = proxy_ip  # 代理服务器的IP地址和端口号
         proxy.ssl_proxy = proxy_ip
-        # proxy.add_to_capabilities(capabilities)
+        chrome_options.add_argument(f'--proxy-server=http://{proxy_ip}')
+
+    for option in chrome_options_args:
+        chrome_options.add_argument(option)
+
+    # # 创建DesiredCapabilities对象
+    # capabilities = webdriver.DesiredCapabilities.CHROME
+
 
     # 获取driver
     service = ChromeService(executable_path=ChromeDriverManager().install())
