@@ -203,9 +203,35 @@ class Baidudisk(object):
         return self.filelist(dir, folder, start, limit, order, desc, web, **kwargs)
 
     def listall(self, path="/", recursion=1, web="1", start=0, limit=2, order="time", desc=1, **kwargs):
-        self.__encode_path(path, **kwargs)
         self.__check_token()
         return listall(self.access_token, path, recursion, web, start, limit, order, desc, **kwargs)
+
+    def listall_by_page(self, path="/", recursion=1, web="1", page_no=1, page_size=1000, order="name", desc=0, **kwargs):
+        """
+        :param path: 需要list的目录，以/开头的绝对路径, 默认为/
+                    路径包含中文时需要UrlEncode编码
+                    给出的示例的路径是/测试目录的UrlEncode编码
+        :param recursion: 是否递归，默认为1
+        :param web: 值为1时，返回dir_empty属性和缩略图数据
+        :param page_no: 页码
+        :param page_size: 每页数量
+        :param order: 排序字段：默认为name；
+        :param desc: 默认为升序，设置为1实现降序 （注：排序的对象是当前目录下所有文件，不是当前分页下的文件）
+        :return:
+            {'errno': 0,
+             'guid': 0,
+             'guid_info': '',
+             'list': [
+                      {'dir_empty': 1,
+                       'fs_id': 0,
+                       'path': '/betterme/0200董晨宇的传播学课_L6798',
+                       'share': 0}
+                      ],
+             'request_id': 9105102554915445232}
+        """
+        start = (page_no - 1) * page_size
+        limit = page_size
+        return self.listall(path, recursion, web, start, limit, order, desc, **kwargs)
 
     def filemetas(self, fsids, thumb=1, extra=1, dlink=1, needmedia=1, **kwargs):
         self.__check_token()
