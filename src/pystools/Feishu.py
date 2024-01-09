@@ -1,90 +1,154 @@
 import json
 import os
 from urllib.parse import urlencode, unquote
-
 import requests
 import urllib3 as urllib3
 from requests_toolbelt import MultipartEncoder
-
 from .Logger import Loggings
 
 urllib3.disable_warnings()
 FEISHU_HTTP_POOL = urllib3.PoolManager(num_pools=1000, cert_reqs='CERT_NONE')
 # 其他请求
 _http_pool = urllib3.PoolManager(num_pools=5000, cert_reqs='CERT_NONE')
-
 # const
 TENANT_ACCESS_TOKEN_URI = "/open-apis/auth/v3/tenant_access_token/internal"
-
 MESSAGE_URI = "/open-apis/im/v1/messages"
-
 # 回复消息
 MESSAGES_REPLY = '/open-apis/im/v1/messages/:message_id/reply'
-
 DRIVE_PERMISSIONS_URI = "/open-apis/drive/v1/permissions/:token/public"
 # 判断当前用户对某文档是否有某权限
 DRIVE_PERMISSION_MEMBER_PERMITTED = "/open-apis/drive/permission/member/permitted"
-
 # 获取协作者列表
 DRIVE_PERMISSIONS_MEMBERS = '/open-apis/drive/v1/permissions/:token/members'
-
 # 新增记录/列出记录
 BITABLE_RECORDS = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records"
-
-
 # 删除记录/检索记录/更新记录
 BITABLE_RECORD = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/:record_id"
-
-
-
-
 # 下载素材
 MEDIAS_DOWNLOAD = "/open-apis/drive/v1/medias/:file_token/download"
 # 获取素材临时下载链接
 MEDIAS_BATCH_GET_TMP_DOWNLOAD_URL = "/open-apis/drive/v1/medias/batch_get_tmp_download_url"
-
 # 云文档/下载文件
 DRIVE_FILES_DOWNLOAD = "/open-apis/drive/v1/files/:file_token/download"
-
 # 获取用户或机器人所在的群列表
 CHATS = "/open-apis//im/v1/chats"
-
 # 批量获取用户id
 USERS_BATCH_GET_ID = "/open-apis/contact/v3/users/batch_get_id"
-
 # 上传素材
 MEDIAS_UPLOAD_ALL = "/open-apis/drive/v1/medias/upload_all"
-
 # 获取文档所有块
 DOCUMENT_BLOCKS = "/open-apis/docx/v1/documents/:document_id/blocks/:block_id"
 # 获取块
 DOCUMENT_BLOCK = "/open-apis/docx/v1/documents/:document_id/blocks"
-
 # 获取用户信息
 CONTACT_USERS = '/open-apis/contact/v3/users/:user_id'
-
 # 获取机器人信息
 BOT_INFO = '/open-apis/bot/v3/info'
-
 # 订阅云文档事件
 FILES_SUBSCRIBE = '/open-apis/drive/v1/files/:file_token/subscribe'
-
 # 获取应用信息
 APPLICATIONS_INFO = '/open-apis/application/v6/applications/:app_id'
-
 # 创建群
 CHATS_CREATE = '/open-apis/im/v1/chats'
-
 # 将用户或机器人拉入群聊
 chat_members = '/open-apis/im/v1/chats/:chat_id/members'
-
 # 多维表格列出字段
 TABLES_FIELDS = '/open-apis/bitable/v1/apps/:app_token/tables/:table_id/fields'
-
 lark_host = "https://open.feishu.cn"
 
 
 class Feishu(object):
+
+    # 多维表格-新增记录/列出记录
+    def bitable_records(self, app_token, table_id, param={}, record_id=None, req_body={}, **kwargs):
+
+        """
+        根据条件查询多维表格记录
+            ```
+query_data = {
+    "app_token":file_token,
+    "param" : {'page_size':100,'filter': f'CurrentValue.[(A)数据ID]="294"',"text_field_as_array":True},
+    "table_id" : table_id
+}
+
+res = feishu.bitable_records(**query_data)
+            ```
+        新增多维表格记录
+update_bitable_record([('(A)状态', "处理中"), ('(A)结果', "正在处理")])
+            或使用
+            ```
+update_data = {
+    "app_token":file_token,
+    "table_id" : table_id,
+    "req_body" : {
+        "fields": {
+                "(A)内容链接": "测试"
+        }
+    }
+}
+res = feishu.bitable_records(**update_data)
+            ```
+
+        更新多维表格记录
+
+update_bitable_record([('(A)状态', "处理中"), ('(A)结果', "正在处理")],record_id)
+            或使用
+            ```
+update_data = {
+    "app_token":file_token,
+    "table_id" : table_id,
+    "record_id" : record_id,
+    "req_body" : {
+        "fields": {
+                "(A)内容链接": "测试"
+        }
+    }
+}
+res = feishu.bitable_records(**update_data)
+            ```
+        """
+        self.__dict__.update(locals())
+
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORDS
+        ).replace(":app_token", app_token).replace(":table_id", table_id)
+        action = "GET"
+        if req_body:
+            action = "POST"
+        if record_id:
+            url = "{}/{}".format(url, record_id)
+            if req_body:
+                action = "PUT"
+        if param:
+            url = url + "?" + urlencode(param)
+        resp = self.req_feishu_api(action, url=url, req_body=req_body)
+        return resp.get("data")
+
+    def update_bitable_record(self, file_token, table_id, update_data, record_id=None, **kwargs):
+        """
+        更新多维表格的数据
+        :param feishu:
+        :param file_token:
+        :param table_id:
+        :param update_data: 格式如 [('(A)状态', "处理中"), ('(A)结果', "正在处理")]
+        :param record_id: 如果不传，就是新增一条数据
+        :return:
+        """
+        self.__dict__.update(locals())
+        # update_data 是一个数组，里面是元组，元组里面是字段名和字段值
+        data = {
+            'fields': {
+                # '(A)状态': "处理中",
+                # '(A)结果': "正在处理"
+            }
+        }
+        # 将update_data里面的数据添加到data里面
+        for item in update_data:
+            data['fields'][item[0]] = item[1]
+        res = self.bitable_records(file_token, table_id, record_id=record_id, req_body=data)
+        return res
+
     def __init__(self, app_id, app_secret,
                  print_feishu_log=True, logger=Loggings(), **kwargs):
 
@@ -259,72 +323,7 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
         return resp.get("data")
 
-    # 多维表格-新增记录/列出记录
-    def bitable_records(self, app_token, table_id, param={}, record_id=None, req_body={},**kwargs):
-
-        """
-        根据条件查询多维表格记录
-            ```
-            data = {
-                "app_token":"app_token"
-                "param" : {'filter': f'CurrentValue.[(A)数据ID]=294',"text_field_as_array":True}
-                "table_id" : "table_id"
-            }
-
-            res = feishu.bitable_records(**data)
-            ```
-        新增多维表格记录
-            ```
-            data = {
-                "app_token":"app_token",
-                "table_id" : "table_id",
-                "req_body" : {
-                    "fields": {
-                            "(A)内容链接": "测试"
-                    }
-                }
-            }
-            res = feishu.bitable_records(**data)
-            ```
-
-        更新多维表格记录
-            ```
-             data = {
-                "app_token":"app_token",
-                "table_id" : "table_id",
-                "record_id" : "record_id",
-                "req_body" : {
-                    "fields": {
-                            "(A)内容链接": "测试"
-                    }
-                }
-            }
-            res = feishu.bitable_records(**data)
-            ```
-            或使用 update_bitable_record
-
-
-
-        """
-        self.__dict__.update(locals())
-
-        self._authorize_tenant_access_token()
-        url = "{}{}".format(
-            lark_host, BITABLE_RECORDS
-        ).replace(":app_token", app_token).replace(":table_id", table_id)
-        action = "GET"
-        if req_body:
-            action = "POST"
-        if record_id:
-            url = "{}/{}".format(url, record_id)
-            if req_body:
-                action = "PUT"
-        if param:
-            url = url + "?" + urlencode(param)
-        resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
-
-    def bitable_record_delete(self, file_token, table_id, record_id,**kwargs):
+    def bitable_record_delete(self, file_token, table_id, record_id, **kwargs):
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
         url = "{}{}".format(
@@ -334,7 +333,7 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url)
         return resp.get("data")
 
-    def bitable_record(self, file_token, table_id, record_id,**kwargs):
+    def bitable_record(self, file_token, table_id, record_id, **kwargs):
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
         url = "{}{}".format(
@@ -409,7 +408,7 @@ class Feishu(object):
         self.__dict__.update(locals())
         self.im_msg_send("open_id", open_id, "text", content)
 
-    def im_msg_send(self, receive_id_type, receive_id, msg_type, content,**kwargs):
+    def im_msg_send(self, receive_id_type, receive_id, msg_type, content, **kwargs):
         self.__dict__.update(locals())
         """
 
@@ -437,7 +436,7 @@ class Feishu(object):
         resp = self.req_feishu_api("POST", url=url, req_body=req_body)
         return resp
 
-    def messages_reply(self, message_id, msg_type, content,**kwargs):
+    def messages_reply(self, message_id, msg_type, content, **kwargs):
         self.__dict__.update(locals())
         """
 
@@ -505,7 +504,7 @@ class Feishu(object):
         # 批量获取用户ID
 
     # 上传文件到飞书
-    def upload_file(self, parent_node, file_name, file_path_or_binary, parent_type,**kwargs):
+    def upload_file(self, parent_node, file_name, file_path_or_binary, parent_type, **kwargs):
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
 
@@ -589,7 +588,7 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url)
         return resp.get("data")
 
-    def bot_permitted(self, token, type, perm='full_access',**kwargs):
+    def bot_permitted(self, token, type, perm='full_access', **kwargs):
         """
         判断机器人是否有某个文档的权限
         :param token: 文件的 token
@@ -720,30 +719,6 @@ class Feishu(object):
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
         return resp.get('data')
-
-    def update_bitable_record(self, file_token, table_id, update_data, record_id=None,**kwargs):
-        """
-        更新多维表格的数据
-        :param feishu:
-        :param file_token:
-        :param table_id:
-        :param update_data: 格式如 [('(A)状态', "处理中"), ('(A)结果', "正在处理")]
-        :param record_id: 如果不传，就是新增一条数据
-        :return:
-        """
-        self.__dict__.update(locals())
-        # update_data 是一个数组，里面是元组，元组里面是字段名和字段值
-        data = {
-            'fields': {
-                # '(A)状态': "处理中",
-                # '(A)结果': "正在处理"
-            }
-        }
-        # 将update_data里面的数据添加到data里面
-        for item in update_data:
-            data['fields'][item[0]] = item[1]
-        res = self.bitable_records(file_token, table_id, record_id=record_id, req_body=data)
-        return res
 
     def send_webhook_msg(self, webhook, msg_type, content, **kwargs):
         """

@@ -15,7 +15,7 @@ sys.path.append(BASE_DIR)
 from ..api import multimediafile_api
 
 
-def listall(access_token,path="/",recursion=1,web="1",start=0,limit=2,order="time",desc=1,**kwargs):
+def listall(access_token,path="/",recursion=1,web="1",start=0,limit=2,order="time",desc=1,ctime=None,mtime=None,device_id=None,**kwargs):
     """
     listall
     """
@@ -27,6 +27,13 @@ def listall(access_token,path="/",recursion=1,web="1",start=0,limit=2,order="tim
     limit = kwargs.get("limit", limit)
     order = kwargs.get("order", order)
     desc = kwargs.get("desc", desc)
+
+    if ctime:
+        kwargs["ctime"] = ctime
+    if mtime:
+        kwargs["mtime"] = mtime
+    if device_id:
+        kwargs["device_id"] = device_id
 
     # Enter a context with an instance of the API client
     with ApiClient() as api_client:
@@ -47,9 +54,12 @@ def listall(access_token,path="/",recursion=1,web="1",start=0,limit=2,order="tim
         #     print("Exception when calling MultimediafileApi->xpanfilelistall: %s\n" % e)
 
 
-def filemetas(access_token,fsids,thumb=1,extra=1,dlink=1,needmedia=1,**kwargs):
+def filemetas(access_token,fsids,thumb=1,extra=1,dlink=1,needmedia=1,path="",**kwargs):
     """
     filemetas
+    :param access_token:
+
+    :return:
     """
     access_token = kwargs.get("access_token", access_token)
     fsids = kwargs.get("fsids", fsids)
@@ -57,6 +67,7 @@ def filemetas(access_token,fsids,thumb=1,extra=1,dlink=1,needmedia=1,**kwargs):
     extra = kwargs.get("extra", extra)
     dlink = kwargs.get("dlink", dlink)
     needmedia = kwargs.get("needmedia", needmedia)
+    path = kwargs.get("path", path)
 
     # Enter a context with an instance of the API client
     with ApiClient() as api_client:
@@ -69,7 +80,7 @@ def filemetas(access_token,fsids,thumb=1,extra=1,dlink=1,needmedia=1,**kwargs):
         # dlink = "1"  # str |  (optional)
         # needmedia = 1  # int |  (optional)
         api_response = api_instance.xpanmultimediafilemetas(
-            access_token, fsids, thumb=thumb, extra=extra, dlink=dlink, needmedia=needmedia,**kwargs)
+            access_token, fsids, thumb=thumb, extra=extra, dlink=dlink, needmedia=needmedia,path = path,**kwargs)
         return api_response
         # example passing only required values which don't have defaults set
         # and optional values

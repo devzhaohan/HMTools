@@ -149,19 +149,7 @@ def delete(access_token,  filelist, ondup="overwrite",_async=1,**kwargs):
 
 def create_folder(access_token, path, isdir=1, rtype=0, local_ctime=None,local_mtime=None,mode=1,**kwargs):
     """
-    :param access_token:	string	是	12.a6b7dbd428f731035f771b8d15063f61.86400.1292922000-2346678-124328	接口鉴权认证参数，标识用户
-    :param path:	string	是	/apps/appName/mydir	创建文件夹的绝对路径，需要urlencode
-    :param isdir:	string	是	1	本接口固定为1
-    :param rtype:	int	否	1	文件命名策略，默认0
-                    0 为不重命名，返回冲突
-                    1 为只要path冲突即重命名
-                    2 为path冲突且block_list不同才重命名
-                    3 为覆盖，需要与预上传precreate接口中的rtype保持一致
-    :param local_ctime:	int	否	1596009229	客户端创建时间(精确到秒)，默认为当前时间戳
-    :param local_mtime:	int	否	1596009229	客户端修改时间(精确到秒)，默认为当前时间戳
-    :param mode:	int	否	1	上传方式
-                    1 手动、2 批量上传、3 文件自动备份
-                    4 相册自动备份、5 视频自动备份
+
 
 
     """
@@ -173,7 +161,7 @@ def create_folder(access_token, path, isdir=1, rtype=0, local_ctime=None,local_m
     local_ctime = kwargs.get("local_ctime", local_ctime)
     local_mtime = kwargs.get("local_mtime", local_mtime)
 
-    # if kwargs.get("mode") is None:
+    # if not kwargs.get("mode") is None:
     #     kwargs["mode"] = mode
 
     # now_time = int(time.time())

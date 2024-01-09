@@ -35,3 +35,7 @@ source venv/bin/activate
 twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
 hesmind 
 ``` 
+
+
+# 提交代码到github
+git 

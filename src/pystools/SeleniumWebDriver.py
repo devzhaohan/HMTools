@@ -6,7 +6,6 @@ import traceback
 from abc import abstractmethod
 
 from selenium.common import TimeoutException, WebDriverException, NoSuchWindowException
-from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -14,8 +13,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 
-def get_driver(chrome_options_args=None, proxy_ip=None, ):
+
+def get_driver(chrome_options_args=None, proxy_ip=None, **kwargs):
+    # 关于chromedriver的问题，请仔细阅读：https://chromedriver.chromium.org/home
+
     if chrome_options_args is None:
         chrome_options_args = ["--headless",  # 以无头模式启动
                                "--disable-gpu",  # 禁用GPU加速
@@ -35,16 +39,16 @@ def get_driver(chrome_options_args=None, proxy_ip=None, ):
     for option in chrome_options_args:
         chrome_options.add_argument(option)
 
-    # # 创建DesiredCapabilities对象
-    # capabilities = webdriver.DesiredCapabilities.CHROME
+    # driver = webdriver.Chrome(options=chrome_options)
 
+    driver_manager_kwargs = kwargs.get("driver_manager_kwargs")
 
     # 获取driver
-    service = ChromeService(executable_path=ChromeDriverManager().install())
-
+    service = Service(executable_path=ChromeDriverManager(
+        **driver_manager_kwargs
+    ).install())
     driver = webdriver.Chrome(
         service=service,
-        # desired_capabilities=capabilities,
         options=chrome_options
     )
 
