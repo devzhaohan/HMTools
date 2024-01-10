@@ -38,4 +38,4 @@ hesmind
 
 
 # 提交代码到github(devzhaohan)
-git 
+git commit -m 'chore: 提交代码'
