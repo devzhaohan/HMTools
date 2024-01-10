@@ -21,7 +21,7 @@ class PLogger:
             log_path = os.path.join(LogPath, log_name)
         else:
             log_path = os.path.join(log_folder, log_name)
-        print(f"log_path:{log_path}")
+        # print(f"log_path:{log_path}")
         self.logger = logger
         # 清空所有设置
         self.logger.remove()
