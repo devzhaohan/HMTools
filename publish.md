@@ -25,6 +25,6 @@ git tag -a v1.0.0 -m "Version 1.0.0"
 git push origin --tags
 ```
 
-4. 成功创建了一个新的发布版本
+4. 进入github，发布新的release
 
 

@@ -10,16 +10,18 @@ project_path = Path.cwd().parent
 LogPath = Path(project_path, "logs")
 
 
-class Logger:
+class PLogger:
     """输出日志到文件和控制台"""
 
-    def __init__(self,log_path=None,log_name=None):
+    def __init__(self, log_folder=None, log_name=None):
         # 文件的命名
         if not log_name:
-            log_name = f"Fast_{time.strftime('%Y-%m-%d', time.localtime()).replace('-', '_')}.log"
-        if not log_path:
+            log_name = f"Fastapilog_{time.strftime('%Y-%m-%d', time.localtime()).replace('-', '_')}.log"
+        if not log_folder:
             log_path = os.path.join(LogPath, log_name)
-        print(f"{log_path} {log_name}")
+        else:
+            log_path = os.path.join(log_folder, log_name)
+        print(f"log_path:{log_path}")
         self.logger = logger
         # 清空所有设置
         self.logger.remove()
@@ -59,4 +61,4 @@ class Logger:
         return self.logger
 
 
-log = Logger(log_path=None,log_name=None).get_logger()
+# log = PLogger().get_logger()
