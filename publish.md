@@ -30,17 +30,16 @@ git status
 git commit -m 'chore: update'
 ```
 
-3. 发布release
+3. 切换到主分支
 ```text
-`# 切换到主分支
 git checkout main
 ```
 
 4. 创建新标记
 ```shell
-#创建一个新的标记（Tag）作为该发布版本的引用点
-git tag -a v1.0.0 -m "Version 1.0.0"
-#其中v1.0.0表示版本号，-m参数指定了标记信息
+# 创建一个新的标记（Tag）作为该发布版本的引用点
+git tag -a v1.0.240110_1 -m "Version 1.0.240110_1"
+# 其中v1.0.0表示版本号，-m参数指定了标记信息
 ```
 
 5. 推送到github
