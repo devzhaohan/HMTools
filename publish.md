@@ -39,7 +39,9 @@ git checkout main
 ```shell
 # 创建一个新的标记（Tag）作为该发布版本的引用点
 # 其中v1.0.0表示版本号，-m参数指定了标记信息
-git tag -a v1.0.240110_3 -m "Version 1.0.240110_3"
+version=$(cat pyproject.toml | grep version | awk -F '"' '{print $2}')
+echo $version
+git tag -a v$version -m "Version ".$version
 ```
 
 # 删除本地tag
