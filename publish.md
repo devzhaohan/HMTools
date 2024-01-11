@@ -39,8 +39,13 @@ git checkout main
 ```shell
 # 创建一个新的标记（Tag）作为该发布版本的引用点
 # 其中v1.0.0表示版本号，-m参数指定了标记信息
-git tag -a v1.0.240110_2 -m "Version 1.0.240110_2"
+git tag -a v1.0.240110_3 -m "Version 1.0.240110_3"
 ```
+
+# 删除本地tag
+git tag -d <tagname>
+# 删除远程tag（注意：删除远程tag需谨慎，可能会影响他人代码）
+git push origin --delete <tagname>
 
 5. 推送到github
 ```shell
