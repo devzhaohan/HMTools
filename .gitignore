@@ -11,6 +11,7 @@
 *.log
 /dist/
 .idea/
+.idea/*.iml
 /src/HMTools.egg-info/
 /src/PysTools.egg-info/
 /tests/

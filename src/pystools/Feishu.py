@@ -20,8 +20,13 @@ DRIVE_PERMISSIONS_URI = "/open-apis/drive/v1/permissions/:token/public"
 DRIVE_PERMISSION_MEMBER_PERMITTED = "/open-apis/drive/permission/member/permitted"
 # 获取协作者列表
 DRIVE_PERMISSIONS_MEMBERS = '/open-apis/drive/v1/permissions/:token/members'
-# 新增记录/列出记录
+
+# 列出记录（旧）
+# 新增记录
 BITABLE_RECORDS = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records"
+# 查询记录
+BITABLE_RECORDS_SEARCH = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/search"
+
 # 删除记录/检索记录/更新记录
 BITABLE_RECORD = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/:record_id"
 # 下载素材
@@ -59,53 +64,43 @@ lark_host = "https://open.feishu.cn"
 
 class Feishu(object):
 
-    # 多维表格-新增记录/列出记录
+    # 多维表格-新增记录、更新记录
     def bitable_records(self, app_token, table_id, param={}, record_id=None, req_body={}, **kwargs):
 
         """
-        根据条件查询多维表格记录
-            ```
-query_data = {
-    "app_token":file_token,
-    "param" : {'page_size':100,'filter': f'CurrentValue.[(A)数据ID]="294"',"text_field_as_array":True},
-    "table_id" : table_id
-}
-
-res = feishu.bitable_records(**query_data)
-            ```
         新增多维表格记录
-update_bitable_record([('(A)状态', "处理中"), ('(A)结果', "正在处理")])
-            或使用
-            ```
-update_data = {
-    "app_token":file_token,
-    "table_id" : table_id,
-    "req_body" : {
-        "fields": {
-                "(A)内容链接": "测试"
+        update_bitable_record([('(A)状态', "处理中"), ('(A)结果', "正在处理")])
+        或使用
+        ```
+        update_data = {
+            "app_token":file_token,
+            "table_id" : table_id,
+            "req_body" : {
+                "fields": {
+                        "(A)内容链接": "测试"
+                }
+            }
         }
-    }
-}
-res = feishu.bitable_records(**update_data)
-            ```
+        res = feishu.bitable_records(**update_data)
+        ```
 
         更新多维表格记录
 
-update_bitable_record([('(A)状态', "处理中"), ('(A)结果', "正在处理")],record_id)
-            或使用
-            ```
-update_data = {
-    "app_token":file_token,
-    "table_id" : table_id,
-    "record_id" : record_id,
-    "req_body" : {
-        "fields": {
-                "(A)内容链接": "测试"
+        update_bitable_record([('(A)状态', "处理中"), ('(A)结果', "正在处理")],record_id)
+                    或使用
+                    ```
+        update_data = {
+            "app_token":file_token,
+            "table_id" : table_id,
+            "record_id" : record_id,
+            "req_body" : {
+                "fields": {
+                        "(A)内容链接": "测试"
+                }
+            }
         }
-    }
-}
-res = feishu.bitable_records(**update_data)
-            ```
+        res = feishu.bitable_records(**update_data)
+        ```
         """
         self.__dict__.update(locals())
 
@@ -120,6 +115,59 @@ res = feishu.bitable_records(**update_data)
             url = "{}/{}".format(url, record_id)
             if req_body:
                 action = "PUT"
+        if param:
+            url = url + "?" + urlencode(param)
+        resp = self.req_feishu_api(action, url=url, req_body=req_body)
+        return resp.get("data")
+
+    # 多维表格-新增记录/列出记录
+    def bitable_records_search(self, app_token, table_id, param={}, req_body={}, **kwargs):
+
+        """
+        根据条件查询多维表格记录
+        ```
+        query_data = {
+            "app_token":file_token,
+            "param" : {'page_size':100,'page_token':"eVQrYzJBNDNONlk4VFZBZVlSdzlKdFJ4bVVHVExENDNKVHoxaVdiVnViQT0="},
+            "table_id" : table_id,
+            "req_body" : {
+                          "view_id": "vewqhz51lk",
+                          "field_names": [
+                            "字段1",
+                            "字段2"
+                          ],
+                          "sort": [
+                            {
+                              "field_name": "多行文本",
+                              "desc": true
+                            }
+                          ],
+                          "filter": {
+                            "conjunction": "and",
+                            "conditions": [
+                              {
+                                "field_name": "字段1",
+                                "operator": "is",
+                                "value": [
+                                  "文本内容"
+                                ]
+                              }
+                            ]
+                          },
+                          "automatic_fields": false #控制是否返回自动计算的字段
+                        }
+        }
+        print(feishu.drive_permissions_members(token=file_token, type="bitable"))
+        res = feishu.bitable_records_search(**query_data)
+        ```
+        """
+        self.__dict__.update(locals())
+
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORDS_SEARCH
+        ).replace(":app_token", app_token).replace(":table_id", table_id)
+        action = "POST"
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
