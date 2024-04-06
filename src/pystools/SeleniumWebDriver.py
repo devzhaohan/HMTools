@@ -171,3 +171,52 @@ def get_driver_screenshot(driver):
         print(f"获取截图失败，窗口已经关闭。")
         pass
     return screenshot
+
+
+'''
+使用方法
+首次使用的时候需要科学上网，它会自动的下载最新的浏览器内核
+
+from pystools import SeleniumWebDriver
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
+
+
+chrome_options_args = [
+    # "--headless",  # 以无头模式启动
+    "--disable-gpu",  # 禁用GPU加速
+    "--no-sandbox",  # 以沙盒模式运行
+    "--disable-dev-shm-usage",  # 禁用/dev/shm使用
+    "--lang=en_US.UTF-8"
+]
+                             
+driver = SeleniumWebDriver.get_driver(chrome_options_args=chrome_options_args)
+
+driver.get(use_url)
+# 等待页面加载出div，最多10秒钟，每0.5秒检查一次页面是否出现了指定元素
+wait = WebDriverWait(driver, 10, poll_frequency=0.5)
+waite_for = "hyxxy"
+waite_for_by = By.CLASS_NAME
+print(f"use url: {use_url}  waite for [{waite_for_by}]:[{waite_for}] ")
+
+try:
+    element = wait.until(EC.presence_of_element_located((waite_for_by, waite_for)))
+except Exception as e:
+    # print(e)
+    tb = traceback.format_exc()
+    error_msg = f"waite for [{waite_for_by}]:[{waite_for}] error  \n{tb} \n\n"
+    raise Exception(f"driver wait异常，url:{url}, {error_msg}")
+
+# 获取视觉页面上的信息
+html = element.get_attribute('outerHTML')
+
+# 使用BeautifulSoup获取指定的元素
+content_box = BeautifulSoup(html, 'html.parser')
+cate_els = content_box.find_all("div", class_="catdalei")
+
+
+driver.quit()
+
+'''
