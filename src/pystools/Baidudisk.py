@@ -75,7 +75,7 @@ class Baidudisk(object):
     def is_auth(self):
         # 如果expires_at大于当前时间，说明token还有效，self.is_auth = True
         now = int(time.time())
-        print("expires_at", self.expires_at, "now", now,  self.expires_at-now)
+        # print("expires_at", self.expires_at, "now", now,  self.expires_at-now)
         is_auth = self.expires_at is not None and self.expires_at > int(time.time())
         return is_auth
 
