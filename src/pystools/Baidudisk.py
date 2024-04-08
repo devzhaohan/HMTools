@@ -5,12 +5,8 @@ import re
 import sys
 import time
 
-import oss2
-import requests
-import shortuuid
+
 import urllib3
-from oss2 import determine_part_size, SizedFileAdapter
-from oss2.models import PartInfo
 
 from .baidu_disk import ApiException
 from .baidu_disk.utils.auth import oauthtoken_devicecode, oauthtoken_devicetoken, oauthtoken_refreshtoken
