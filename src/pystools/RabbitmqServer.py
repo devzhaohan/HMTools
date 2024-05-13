@@ -14,7 +14,7 @@ class RabbitmqServer(object):
         user_pwd = pika.PlainCredentials(self.username, self.password)
         s_conn = pika.BlockingConnection(
             pika.ConnectionParameters(host=self.serverip, port=self.port, credentials=user_pwd,
-                                      virtual_host=virtual_host))  # 创建连接
+                                      virtual_host=self.virtual_host))  # 创建连接
         self.channel = s_conn.channel()
 
     # def close_connent(self):

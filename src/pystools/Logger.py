@@ -11,9 +11,16 @@ from pathlib import Path
 project_path = Path.cwd().parent
 log_path = Path(project_path, "logs")
 
-
 # t = time.strftime("%Y_%m_%d")
-
+# import pytz
+# from datetime import datetime
+# # 设置时区为"Asia/Shanghai"
+# shanghai_tz = pytz.timezone('Asia/Shanghai')
+# # 获取当前时间
+# now = datetime.now()
+# # 将当前时间转换为"Asia/Shanghai"时区的时间
+# now_shanghai = shanghai_tz.localize(now)
+#
 
 class Loggings:
     __instance = None
