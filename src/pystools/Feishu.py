@@ -41,10 +41,17 @@ CHATS = "/open-apis//im/v1/chats"
 USERS_BATCH_GET_ID = "/open-apis/contact/v3/users/batch_get_id"
 # 上传素材
 MEDIAS_UPLOAD_ALL = "/open-apis/drive/v1/medias/upload_all"
-# 获取文档所有块
+
+# ------
+# 创建文档
+DOCUMENT_CREATE = '/open-apis/docx/v1/documents'
+# 创建块
+DOCUMENT_BLOCK_CREATE = '/open-apis/docx/v1/documents/:document_id/blocks/:block_id/children'
+# 获取块(或所有块)
 DOCUMENT_BLOCKS = "/open-apis/docx/v1/documents/:document_id/blocks/:block_id"
-# 获取块
-DOCUMENT_BLOCK = "/open-apis/docx/v1/documents/:document_id/blocks"
+
+# ------
+
 # 获取用户信息
 CONTACT_USERS = '/open-apis/contact/v3/users/:user_id'
 # 获取机器人信息
@@ -59,6 +66,7 @@ CHATS_CREATE = '/open-apis/im/v1/chats'
 chat_members = '/open-apis/im/v1/chats/:chat_id/members'
 # 多维表格列出字段
 TABLES_FIELDS = '/open-apis/bitable/v1/apps/:app_token/tables/:table_id/fields'
+
 lark_host = "https://open.feishu.cn"
 
 
@@ -608,8 +616,59 @@ class Feishu(object):
 
         return response_dict.get("data")
 
-    # 获取文档基本信息
+    def documents_create(self, title, folder_token=None):
+        self.__dict__.update(locals())
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, DOCUMENT_CREATE
+        )
+        # 标题只留前800个字符
+        if len(title) > 800:
+            title = title[:800]
+        req_body = {
+            "title": title,
+            "folder_token": folder_token,
+        }
+        if not folder_token:
+            req_body.pop("folder_token")
+
+        resp = self.req_feishu_api("POST", url=url, req_body=req_body)
+        return resp
+
+    def documents_block_create(self, document_id, children=[], index=-1, block_id=None):
+        """
+        创建文档块
+        见文档：https://open.feishu.cn/document/server-docs/docs/docs/docx-v1/document-block/create
+
+        :param document_id: 文档ID
+        :param children: 块内容，长度范围：1 ～ 50。在一次请求中，你最多可以创建 5 个电子表格（Sheet）块
+        :param index: 指定在某个块的子块列表中，新创建的子块的放置位置。索引的起始值为 0，表示子块列表的第一个位置；索引的最大值为某个块的子块数量，表示子块列表的最后一个位置。例如：一个块的子块列表中有 5 个子块，那么它们的索引分别为 0、1、2、3、4。如果要在该块的子块列表的中放置一个新创建的子块，并将其放置到第一个位置，那么索引值应为 0；如果要将新创建的子块放置到最后一个位置，那么索引值应为 -1
+        :param block_id: 块ID,如果不传，表示文档树根节点创建子块
+        :return:
+        """
+        self.__dict__.update(locals())
+        self._authorize_tenant_access_token()
+        if not block_id:
+            block_id = document_id
+        url = "{}{}".format(
+            lark_host, DOCUMENT_BLOCK_CREATE
+        ).replace(":document_id", document_id).replace(":block_id", block_id)
+        req_body = {
+            "index": index,
+            "children": children
+        }
+        resp = self.req_feishu_api("POST", url=url, req_body=req_body)
+        return resp
+
+    # 获取文档块
     def document_blocks(self, document_id, block_id="", param={}, **kwargs):
+        """
+        获取文档块
+        :param document_id: 文档ID
+        :param block_id: 块ID，如果不传，表示查询所有块，传入表示获取块内容
+        :param param: 查询参数
+        :return:
+        """
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
         url = "{}{}?page_size=500".format(
