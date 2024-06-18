@@ -817,15 +817,49 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url, check_code=False, check_status=False)
         return resp
 
-    def tables_fields(self, app_token, table_id, **kwargs):
+    def tables_fields(self, app_token, table_id, query_params=None):
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
         url = "{}{}".format(
             lark_host, TABLES_FIELDS
         ).replace(':app_token', app_token).replace(':table_id', table_id)
+        if query_params:
+            url = url + "?" + urlencode(query_params)
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
         return resp.get('data')
+
+    def tables_fields_info(self, field_names: list, app_token, table_id, query_params={}):
+        """
+        获取表格字段信息
+        :param field_names: 字段名列表 ["字段名1","字段名2","字段名3"]
+        :param app_token:
+        :param table_id:
+        :param query_params:留空即可
+        """
+        query_params['page_size'] = 100
+        field_name_dicts = []
+        for field_name in field_names:
+            if type(field_name) is str:
+                field_name_dicts.append({"field_name": field_name})
+            else:
+                field_name_dicts.append(field_name)
+
+        tables_fields_res = self.tables_fields(app_token, table_id, query_params)
+        has_more = tables_fields_res.get('has_more')
+        if not has_more:
+            field_items = tables_fields_res.get('items')
+            for field_item in field_items:
+                field_name = field_item.get('field_name')
+                for field_name_dict in field_name_dicts:
+                    if field_name_dict.get('field_name') == field_name:
+                        field_name_dict.update(field_item)
+
+            return field_name_dicts
+
+        query_params['page_size'] = 100
+        query_params['page_token'] = tables_fields_res.get('page_token')
+        self.tables_fields_info(field_name_dicts,app_token, table_id, query_params)
 
     def send_webhook_msg(self, webhook, msg_type, content, **kwargs):
         """
