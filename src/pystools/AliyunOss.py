@@ -162,7 +162,8 @@ class AliyunOSS(object):
                 parts.append(PartInfo(part_number, result.etag))
 
                 consumed_bytes += len(data)
-                progress_callback(consumed_bytes, total_size,filename)
+                if progress_callback is not None:  # 检查 progress_callback 是否为 None
+                    progress_callback(consumed_bytes, total_size, filename)
 
 
             offset += num_to_upload
