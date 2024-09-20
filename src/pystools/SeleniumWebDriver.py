@@ -42,7 +42,7 @@ def get_driver(chrome_options_args=None, proxy_ip=None, **kwargs):
     # driver = webdriver.Chrome(options=chrome_options)
 
     driver_manager_kwargs = kwargs.get("driver_manager_kwargs")
-    if driver_manager_kwargs == None:
+    if driver_manager_kwargs is None:
         driver_manager_kwargs = {}
 
     # 获取driver

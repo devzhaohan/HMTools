@@ -24,11 +24,25 @@ DRIVE_PERMISSIONS_MEMBERS = '/open-apis/drive/v1/permissions/:token/members'
 # 列出记录（旧）
 # 新增记录
 BITABLE_RECORDS = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records"
+
+# 新增多条记录
+BITABLE_RECORDS_BATCH_CREATE = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/batch_create"
+
 # 查询记录
 BITABLE_RECORDS_SEARCH = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/search"
 
 # 删除记录/检索记录/更新记录
 BITABLE_RECORD = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/:record_id"
+
+# 批量删除记录
+BITABLE_RECORDS_BATCH_DELETE = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/batch_delete"
+
+# 更新多条记录
+BITABLE_RECORDS_BATCH_UPDATE = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/batch_update"
+
+# 批量获取记录
+BITABLE_RECORDS_BATCH_GET = "/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/batch_get"
+
 # 下载素材
 MEDIAS_DOWNLOAD = "/open-apis/drive/v1/medias/:file_token/download"
 # 获取素材临时下载链接
@@ -64,8 +78,9 @@ APPLICATIONS_INFO = '/open-apis/application/v6/applications/:app_id'
 CHATS_CREATE = '/open-apis/im/v1/chats'
 # 将用户或机器人拉入群聊
 chat_members = '/open-apis/im/v1/chats/:chat_id/members'
+
 # 多维表格列出字段
-TABLES_FIELDS = '/open-apis/bitable/v1/apps/:app_token/tables/:table_id/fields'
+TABLES_FIELDS = '/open-apis/bitable/v1/apps/:app_token/tables/:table_id/fields/:field_id'
 
 lark_host = "https://open.feishu.cn"
 
@@ -123,6 +138,67 @@ class Feishu(object):
             url = "{}/{}".format(url, record_id)
             if req_body:
                 action = "PUT"
+        if param:
+            url = url + "?" + urlencode(param)
+        resp = self.req_feishu_api(action, url=url, req_body=req_body)
+        return resp.get("data")
+
+    def bitable_records_batch_create(self, app_token, table_id, req_body={}, param={}, **kwargs):
+
+        """
+        req_body = {
+                "records": [
+                    {
+                        "fields": {
+                            "多行文本": "多行文本内容",
+                            "条码": "qawqe",
+                            "数字": 100,
+                            "货币": 3,
+                            "评分": 3,
+                            "进度": 0.25,
+                            "单选": "选项1",
+                            "多选": ["选项1", "选项2"],
+                            "日期": 1674206443000,
+                            "复选框": true,
+                            "人员": [
+                                {
+                                    "id": "ou_2910013f1e6456f16a0ce75ede950a0a"
+                                },
+                                {
+                                    "id": "ou_e04138c9633dd0d2ea166d79f548ab5d"
+                                }
+                            ],
+                            "群组": [
+                                {
+                                    "id": "oc_cd07f55f14d6f4a4f1b51504e7e97f48"
+                                }
+                            ],
+                            "电话号码": "13026162666",
+                            "超链接": {
+                                "text": "飞书多维表格官网",
+                                "link": "https://www.feishu.cn/product/base"
+                            },
+                            "附件": [
+                                {
+                                    "file_token": "Vl3FbVkvnowlgpxpqsAbBrtFcrd"
+                                }
+                            ],
+                            "单向关联": ["recHTLvO7x", "recbS8zb2m"],
+                            "双向关联": ["recHTLvO7x", "recbS8zb2m"],
+                            "地理位置": "116.397755,39.903179"
+                        }
+                    }
+                ]
+            }
+        """
+
+        self.__dict__.update(locals())
+
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORDS_BATCH_CREATE
+        ).replace(":app_token", app_token).replace(":table_id", table_id)
+        action = "POST"
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
@@ -389,6 +465,19 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url)
         return resp.get("data")
 
+    def bitable_records_batch_delete(self, file_token, table_id, record_ids: list, **kwargs):
+        self.__dict__.update(locals())
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORDS_BATCH_DELETE
+        ).replace(":app_token", file_token).replace(":table_id", table_id)
+        action = "POST"
+        req_body = {
+            "records": record_ids
+        }
+        resp = self.req_feishu_api(action, url=url, req_body=req_body)
+        return resp.get("data")
+
     def bitable_record(self, file_token, table_id, record_id, **kwargs):
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
@@ -397,6 +486,92 @@ class Feishu(object):
         ).replace(":app_token", file_token).replace(":table_id", table_id).replace(":record_id", record_id)
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
+        return resp.get("data")
+
+    def bitable_records_batch_get(self, file_token, table_id, record_ids: list, with_shared_url=False,
+                                  automatic_fields=True, user_id_type="open_id", **kwargs):
+        self.__dict__.update(locals())
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORDS_BATCH_GET
+        ).replace(":app_token", file_token).replace(":table_id", table_id)
+        action = "POST"
+        req_body = {
+            "record_ids": record_ids,
+            "with_shared_url": with_shared_url,
+            "automatic_fields": automatic_fields,
+            "user_id_type": user_id_type
+        }
+        resp = self.req_feishu_api(action, url=url, req_body=req_body)
+        return resp.get("data")
+
+    def bitable_records_batch_update(self, file_token, table_id, req_body, param={}, **kwargs):
+        '''
+        req_body = {
+                "records": [
+                    {
+                        "record_id": "reclAqylTN",
+                        "fields": {
+                            "索引": "索引列多行文本类型",
+                            "多行文本": "多行文本内容",
+                            "数字": 100,
+                            "单选": "选项3",
+                            "多选": [
+                                "选项1",
+                                "选项2"
+                            ],
+                            "日期": 1674206443000,
+                            "条码": "qawqe",
+                            "复选框": true,
+                            "人员": [
+                                {
+                                    "id": "ou_2910013f1e6456f16a0ce75ede950a0a"
+                                },
+                                {
+                                    "id": "ou_e04138c9633dd0d2ea166d79f548ab5d"
+                                }
+                            ],
+                            "群组": [
+                                {
+                                    "id": "oc_cd07f55f14d6f4a4f1b51504e7e97f48"
+                                }
+                            ],
+                            "电话号码": "13026162666",
+                            "超链接": {
+                                "text": "飞书多维表格官网",
+                                "link": "https://www.feishu.cn/product/base"
+                            },
+                            "附件": [
+                                {
+                                    "file_token": "Vl3FbVkvnowlgpxpqsAbBrtFcrd"
+                                }
+                            ],
+                            "单向关联": [
+                                "recHTLvO7x",
+                                "recbS8zb2m"
+                            ],
+                            "双向关联": [
+                                "recHTLvO7x",
+                                "recbS8zb2m"
+                            ],
+                            "地理位置": "116.397755,39.903179",
+                            "评分": 3,
+                            "货币": 3,
+                            "进度": 0.25
+                        }
+                    }
+                ]
+            }
+        '''
+        self.__dict__.update(locals())
+        self._authorize_tenant_access_token()
+        url = "{}{}".format(
+            lark_host, BITABLE_RECORDS_BATCH_UPDATE
+        ).replace(":app_token", file_token).replace(":table_id", table_id)
+        action = "POST"
+        if param:
+            url = url + "?" + urlencode(param)
+        resp = self.req_feishu_api(action, url=url, req_body=req_body)
         return resp.get("data")
 
     def medias_download(self, file_token, param={}):
@@ -817,16 +992,31 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url, check_code=False, check_status=False)
         return resp
 
-    def tables_fields(self, app_token, table_id, query_params=None):
+    # 列出字段、新增字段、更新字段、删除字段
+    def tables_fields(self, app_token, table_id, query_params=None, field_id="", req_body=None):
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
         url = "{}{}".format(
             lark_host, TABLES_FIELDS
-        ).replace(':app_token', app_token).replace(':table_id', table_id)
+        ).replace(':app_token', app_token).replace(':table_id', table_id).replace(':field_id', field_id)
+
+        # 如果url是以/结尾的，就去掉
+        if url[-1] == '/':
+            url = url[:-1]
+
         if query_params:
             url = url + "?" + urlencode(query_params)
-        action = "GET"
-        resp = self.req_feishu_api(action, url=url)
+
+        if not req_body and not field_id:
+            action = "GET"
+        elif req_body and not field_id:
+            action = "POST"
+        elif req_body and field_id:
+            action = "PUT"
+        elif not req_body and field_id:
+            action = "DELETE"
+
+        resp = self.req_feishu_api(action, url=url, req_body=req_body)
         return resp.get('data')
 
     def tables_fields_info(self, field_names: list, app_token, table_id, query_params={}):
@@ -836,6 +1026,29 @@ class Feishu(object):
         :param app_token:
         :param table_id:
         :param query_params:留空即可
+
+        返回值中：
+        type可选值有：
+            1：多行文本
+            2：数字
+            3：单选
+            4：多选
+            5：日期
+            7：复选框
+            11：人员
+            13：电话号码
+            15：超链接
+            17：附件
+            18：关联
+            20：公式
+            21：双向关联
+            22：地理位置
+            23：群组
+            1001：创建时间
+            1002：最后更新时间
+            1003：创建人
+            1004：修改人
+            1005：自动编号
         """
         query_params['page_size'] = 100
         field_name_dicts = []
@@ -859,7 +1072,7 @@ class Feishu(object):
 
         query_params['page_size'] = 100
         query_params['page_token'] = tables_fields_res.get('page_token')
-        self.tables_fields_info(field_name_dicts,app_token, table_id, query_params)
+        self.tables_fields_info(field_name_dicts, app_token, table_id, query_params)
 
     def send_webhook_msg(self, webhook, msg_type, content, **kwargs):
         """
