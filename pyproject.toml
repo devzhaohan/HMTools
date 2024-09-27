@@ -1,6 +1,6 @@
 [project]
 name = "pystools"
-version = "0.0.74"
+version = "0.0.75"
 authors = [
   { name="木坦坦", email="devzhao@126.com" },
 ]
@@ -28,6 +28,7 @@ dependencies = [
     "selenium>=4.10.0",
     "python-dateutil",
     "pytz",
+    "Deprecated"
 #    "Pillow-SIMD"
 
 ]

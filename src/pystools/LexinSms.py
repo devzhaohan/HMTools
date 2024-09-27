@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+import requests
 import hashlib
+from deprecated import deprecated
 
-from MD5util import md5_encode
+API_URL = "https://sdkv2.lx598.com/msgpool/sdk/"
 
 
 # 乐信短信接口
+
 class LexinSms:
     def __init__(self, app_id, app_secret, acc_name, acc_pwd, **kwargs):
         self.__dict__.update(locals())
@@ -15,7 +19,55 @@ class LexinSms:
         m.update(f"{acc_pwd}".encode("utf-8"))
         self.accPwd = m.hexdigest().upper()
 
+    @staticmethod
+    def md5_hash(string):
+        """Return MD5 hash of the given string."""
+        return hashlib.md5(string.encode()).hexdigest().upper()
+
+    def send_sms(self, aimcodes, content):
+        """Send SMS."""
+        params = {
+            'AppID':  self.accName,
+            'AppSecret': self.accPwd,
+            'aimcodes': aimcodes,
+            'content': content,
+            'dataType': 'json'
+        }
+        response = requests.post(API_URL + "send", data=params)
+        return response.text
+
+    def qry_balance(self):
+        """Query balance."""
+        params = {
+            'AppID':  self.accName,
+            'AppSecret': self.accPwd
+        }
+        response = requests.post(API_URL + "qryBalance", data=params)
+        return response.text
+
+    def qry_report(self):
+        """Query report."""
+        params = {
+            'AppID':  self.accName,
+            'AppSecret': self.accPwd
+        }
+        response = requests.post(API_URL + "qryReport", data=params)
+        return response.text
+
+    def receive_sms(self):
+        """Receive SMS."""
+        params = {
+            'AppID':  self.accName,
+            'AppSecret': self.accPwd
+        }
+        response = requests.post(API_URL + "receiveSms", data=params)
+        return response.text
+
+    @deprecated(reason="此方法不建议再使用，请使用send_sms方法")
     def send(self, aimcodes, content, msgId, extNo):
+        """
+
+        """
         accName = self.accName
         accPwd = self.accPwd
         url = f"http://sdk.lx198.com/sdk/send?dataType=json&accName={accName}&" \
@@ -33,6 +85,7 @@ class LexinSms:
         http = urllib3.PoolManager()
         r = http.request('GET', url)
         return r.data.decode('utf-8')
+
 
 if __name__ == '__main__':
     AppID = "xxx"
