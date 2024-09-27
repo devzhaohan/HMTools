@@ -28,7 +28,6 @@ class LexinSms:
         params = {
             'AppID': self.AppID,
             'AppSecret': self.AppSecret,
-            'aimcodes': aimcodes,
             'TemplateCode': template_code,
             'TemplateParam': template_param,
             'Format': 'JSON',
