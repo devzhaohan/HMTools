@@ -45,7 +45,6 @@ class RabbitmqServer(object):
             exclusive=exclusive,
             consumer_tag=consumer_tag,
             arguments=arguments
-
         )
 
         self.channel.start_consuming()
