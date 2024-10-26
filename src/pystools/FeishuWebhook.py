@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #     -d '{"msg_type":"text","content":{"text":"request example"}}' \
 #     https://open.feishu.cn/open-apis/bot/v2/hook/****
 
-def send_wehbook(content, msg_type="plain_text", url: str = os.getenv("APP_ERR_WEBHOOK"), logger=Loggings()):
+def send_webhook(content, msg_type="plain_text", url: str = os.getenv("APP_ERR_WEBHOOK"), logger=Loggings()):
     logger.info(f"send_wehbook url type: {type(url)} ")
     if not url:
         logger.error(f"send_wehbook url is None")
@@ -38,3 +38,4 @@ def send_wehbook(content, msg_type="plain_text", url: str = os.getenv("APP_ERR_W
         tb = traceback.format_exc()
         logger.error(f"send_wehbook error: {e} | {tb}")
         return False, e
+
