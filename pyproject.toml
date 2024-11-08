@@ -1,6 +1,6 @@
 [project]
 name = "pystools"
-version = "0.0.81"
+version = "0.0.82"
 authors = [
   { name="木坦坦", email="devzhao@126.com" },
 ]

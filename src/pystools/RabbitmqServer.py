@@ -10,16 +10,21 @@ class RabbitmqServer(object):
         self.serverip = serverip
         self.port = port
         self.virtual_host = virtual_host
+        self.conn = None
 
     def connent(self):
         user_pwd = pika.PlainCredentials(self.username, self.password)
         s_conn = pika.BlockingConnection(
             pika.ConnectionParameters(host=self.serverip, port=self.port, credentials=user_pwd,
                                       virtual_host=self.virtual_host))  # 创建连接
+        self.conn = s_conn
         self.channel = s_conn.channel()
 
     def close_connent(self):
-        self.channel.connection.close()
+        if self.conn.is_open():
+            self.conn.close()
+        #
+        # self.channel.connection.close()
 
     def productMessage(self, queuename, message):
         self.channel.queue_declare(queue=queuename, durable=True)
@@ -30,10 +35,10 @@ class RabbitmqServer(object):
                                    # 设置消息持久化，将要发送的消息的属性标记为2，表示该消息要持久化
                                    )
 
-    def expense(self, queuename, func,auto_ack=False,
-            exclusive=False,
-            consumer_tag=None,
-            arguments=None):
+    def expense(self, queuename, func, auto_ack=False,
+                exclusive=False,
+                consumer_tag=None,
+                arguments=None):
         """
         :param queuename: 消息队列名称
         :param func: 要回调的方法名
