@@ -4,6 +4,7 @@ import time
 
 class RabbitmqServer(object):
     def __init__(self, username, password, serverip, port, virtual_host):
+        self.channel = None
         self.username = username
         self.password = password
         self.serverip = serverip
