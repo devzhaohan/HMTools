@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import requests
 import hashlib
-from deprecated import deprecated
 
 API_URL = "https://sdkv2.lx598.com/msgpool/sdk/"
 
