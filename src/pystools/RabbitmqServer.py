@@ -21,6 +21,8 @@ class RabbitmqServer(object):
         self.channel = s_conn.channel()
 
     def close_connent(self):
+        if self.conn is None:
+            return
         if self.conn.is_open:
             self.conn.close()
         #

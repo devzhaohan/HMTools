@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-import re
-import sys
 import time
-
-
 import urllib3
-
 from .baidu_disk import ApiException
 from .baidu_disk.utils.auth import oauthtoken_devicecode, oauthtoken_devicetoken, oauthtoken_refreshtoken
 from .baidu_disk.utils.fileinfo import filelist
@@ -15,7 +10,6 @@ from .baidu_disk.utils.filemanager import move, copy, rename, delete, create_fol
 from .baidu_disk.utils.multimedia_file import listall, filemetas
 
 HTTP_POOL = urllib3.PoolManager(cert_reqs='CERT_NONE')
-import urllib.parse
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

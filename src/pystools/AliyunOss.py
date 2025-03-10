@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import re
-import sys
 
 import oss2
 import requests
-import shortuuid
 import urllib3
-from oss2 import determine_part_size, SizedFileAdapter
+from oss2 import determine_part_size
 from oss2.models import PartInfo
 
 HTTP_POOL = urllib3.PoolManager(cert_reqs='CERT_NONE')
@@ -14,7 +12,7 @@ import urllib.parse
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class AliyunOSS(object):
+class Uploader(object):
     def __init__(self, accesskey_id, accesskey_secret, endpoint, bucket, domian, **kwargs):
 
         self.__dict__.update(locals())
@@ -275,3 +273,53 @@ class AliyunOSS(object):
         }
         objects = self.list_obj(**params)
         return objects
+
+import json
+import os
+import base64
+import hmac
+import hashlib
+from datetime import datetime, timedelta
+class MpUploadOssHelper:
+    def __init__(self, accesskey_id: str, accesskey_secret: str, bucket:str,
+                 oss_region: str="oss-cn-hangzhou",timeout: int = 60*60*1, max_size: int = 100):
+        self.access_key_id = accesskey_id
+        self.access_key_secret = accesskey_secret
+        self.timeout = timeout  # 超时时间，单位秒
+        self.max_size = max_size  # 上传文件大小限制，单位MB
+        self.bucket = bucket
+        self.endpoint = f"{oss_region}.aliyuncs.com"
+
+    def create_upload_params(self):
+        policy = self.get_policy_base64()
+        signature = self.signature(policy)
+        return {
+            "OSSAccessKeyId": self.access_key_id,
+            "policy": policy,
+            "signature": signature,
+        }
+
+    def get_policy_base64(self):
+        expiration = (datetime.utcnow() + timedelta(seconds=self.timeout)).isoformat() + "Z"  # 设置policy的过期时间
+        policy_dict = {
+            "expiration": expiration,
+            "conditions": [
+                ["content-length-range", 0, self.max_size * 1024 * 1024],  # 限制上传文件的大小
+                {"bucket": self.bucket},
+            ]
+        }
+        policy_bytes = base64.b64encode(bytes(json.dumps(policy_dict), 'utf-8'))
+        return policy_bytes.decode('utf-8')
+
+    def signature(self, policy):
+        signature = hmac.new(self.access_key_secret.encode('utf-8'), policy.encode('utf-8'), hashlib.sha1).digest()
+        return base64.b64encode(signature).decode('utf-8')
+
+    def upload_file(self, file_path: str, file_data: bytes):
+        # 使用阿里云 OSS SDK 上传文件
+        auth = oss2.Auth(self.access_key_id, self.access_key_secret)
+        bucket = oss2.Bucket(auth, self.endpoint, self.bucket)
+        bucket.put_object(file_path, file_data)
+
+        file_url = f"https://{self.bucket}.{self.endpoint}/{file_path}"
+        return file_url

@@ -2,8 +2,6 @@ import base64
 import hashlib
 import os
 import random
-import time
-import uuid
 
 from PIL import Image, ImageDraw, ImageFont
 

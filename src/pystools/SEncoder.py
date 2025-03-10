@@ -92,3 +92,75 @@ class SEncoder:
         m.update(param_str.encode("utf-8"))
         sign = m.hexdigest()
         return {"sign": sign, "param_str": param_str}
+    
+from hashlib import md5
+import json
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+import base64
+import os
+
+def encrypt_json(json_data, key: str):
+    key = md5(key.encode('utf-8')).digest()
+    json_str = "{}"
+    if isinstance(json_data, str):
+        json_str = json_data
+    elif isinstance(json_data, dict):
+        json_str = json.dumps(json_data, ensure_ascii=False)
+    else:
+        raise ValueError("json_data 必须是字符串或字典")
+
+    # 生成加密器（使用CBC模式）
+    iv = b'1234567812345678'  # 初始化向量(长度需16字节)
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+
+    # 加密并填充数据
+    encrypted_data = cipher.encrypt(pad(json_str.encode('utf-8'), AES.block_size))
+
+    # 转换为Base64字符串
+    return base64.b64encode(encrypted_data).decode('utf-8')
+
+
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
+import base64
+
+
+def decrypt_json(encrypted_str: str, key: str):
+    key = md5(key.encode('utf-8')).digest()
+    # Base64解码
+    encrypted_data = base64.b64decode(encrypted_str)
+
+    # 生成解密器
+    iv = b'1234567812345678'  # 需与加密时的IV一致
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+
+    # 解密并去除填充
+    decrypted_data = unpad(cipher.decrypt(encrypted_data), AES.block_size)
+
+    return decrypted_data.decode('utf-8')
+
+
+from datetime import datetime
+from urllib.parse import urlparse
+import os
+
+def get_filename_from_url(url,sub_fix=None  ):
+    # 解析URL获取路径部分
+    parsed = urlparse(url)
+    # 分割路径并获取最后一段
+    path = parsed.path
+    if not path:
+        return ""
+    
+    res = os.path.basename(path)
+    
+
+    if sub_fix:
+        return res.split(".")[0] + sub_fix + "." + res.split(".")[1]
+    else:
+        return res
+
+# 获取当前时间
+def get_current_time(format_str="%Y-%m-%d %H:%M:%S"):
+    return datetime.now().strftime(format_str)
