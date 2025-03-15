@@ -280,6 +280,31 @@ class Feishu(object):
             data['fields'][item[0]] = item[1]
         res = self.bitable_records(file_token, table_id, record_id=record_id, req_body=data)
         return res
+    
+
+    def update_bitable_record2(self, file_token, table_id, update_data, record_id=None, **kwargs):
+        """
+        更新多维表格的数据
+        :param feishu:
+        :param file_token:
+        :param table_id:
+        :param update_data: 格式如 [{'(A)状态': "处理中"}, {'(A)结果': "正在处理"}]
+        :param record_id: 如果不传，就是新增一条数据
+        :return:
+        """
+        self.__dict__.update(locals())
+        # update_data 是一个数组，里面是字典，字典里面是字段名和字段值
+        data = {
+            'fields': {
+                # '(A)状态': "处理中",
+                # '(A)结果': "正在处理"
+            }
+        }
+        # 将update_data里面的数据添加到data里面
+        for item in update_data:
+            data['fields'].update(item)
+        res = self.bitable_records(file_token, table_id, record_id=record_id, req_body=data)
+        return res
 
     def __init__(self, app_id, app_secret,
                  print_feishu_log=True, logger=Loggings(), **kwargs):
