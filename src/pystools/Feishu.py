@@ -356,7 +356,8 @@ class Feishu(object):
             response_dict = json.loads(resp.data.decode('utf-8'))
             code = response_dict.get("code", -1)
             if code != 0:
-                self.logger.error("url:{},response:{}".format(url, response_dict))
+                if self.print_feishu_log:
+                    self.logger.error("url:{},response:{}".format(url, response_dict))
                 raise LarkException(code=code, msg=response_dict.get("msg"), url=url, req_body=req_body,
                                     headers=headers)
 
@@ -392,8 +393,10 @@ class Feishu(object):
                     }
                 }
                 self.notify_send(msg_type, msg)
-        except:
-            self.logger.info("{} 返回值不是json格式".format(req_url))
+        except Exception as e :
+            raise e
+            if self.print_feishu_log:
+                self.logger.info("{} 返回值不是json格式".format(req_url))
 
     def req_feishu_api(self, action, url, req_body={}, check_code=True, check_status=True):
         # sleep(0.1)
@@ -811,7 +814,8 @@ class Feishu(object):
         response_dict = json.loads(response.content.decode('utf-8'))
         code = response_dict.get("code", -1)
         if code != 0:
-            self.logger.error("url:{},response:{}".format(url, response_dict))
+            if self.print_feishu_log:
+                self.logger.error("url:{},response:{}".format(url, response_dict))
             raise LarkException(code=code, msg=response_dict.get("msg"), url=url)
 
         return response_dict.get("data")
@@ -1057,7 +1061,7 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
         return resp.get('data') if resp else None
 
-    def create_table_field(self, app_token, table_id, req_body):
+    def create_table_field(self, app_token, table_id, field_name, field_type):
         """
         创建表格字段
         req_body = {
@@ -1065,6 +1069,10 @@ class Feishu(object):
             "type": 1
         }
         """
+        req_body = {
+            "field_name": field_name,
+            "type": field_type
+        }
         return self.tables_fields(app_token=app_token, table_id=table_id, req_body=req_body)
         
     # 获取表格字段信息
