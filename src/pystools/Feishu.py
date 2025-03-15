@@ -141,7 +141,7 @@ class Feishu(object):
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def bitable_records_batch_create(self, app_token, table_id, req_body={}, param={}, **kwargs):
 
@@ -202,7 +202,7 @@ class Feishu(object):
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     # 多维表格-新增记录/列出记录
     def bitable_records_search(self, app_token, table_id, param={}, req_body={}, **kwargs):
@@ -255,7 +255,7 @@ class Feishu(object):
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def update_bitable_record(self, file_token, table_id, update_data, record_id=None, **kwargs):
         """
@@ -478,7 +478,7 @@ class Feishu(object):
         if req_body:
             action = "PATCH"
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def bitable_record_delete(self, file_token, table_id, record_id, **kwargs):
         self.__dict__.update(locals())
@@ -488,7 +488,7 @@ class Feishu(object):
         ).replace(":app_token", file_token).replace(":table_id", table_id).replace(":record_id", record_id)
         action = "DELETE"
         resp = self.req_feishu_api(action, url=url)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def bitable_records_batch_delete(self, file_token, table_id, record_ids: list, **kwargs):
         self.__dict__.update(locals())
@@ -501,7 +501,7 @@ class Feishu(object):
             "records": record_ids
         }
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def bitable_record(self, file_token, table_id, record_id, **kwargs):
         self.__dict__.update(locals())
@@ -511,7 +511,7 @@ class Feishu(object):
         ).replace(":app_token", file_token).replace(":table_id", table_id).replace(":record_id", record_id)
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def bitable_records_batch_get(self, file_token, table_id, record_ids: list, with_shared_url=False,
                                   automatic_fields=True, user_id_type="open_id", **kwargs):
@@ -528,7 +528,7 @@ class Feishu(object):
             "user_id_type": user_id_type
         }
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def bitable_records_batch_update(self, file_token, table_id, req_body, param={}, **kwargs):
         '''
@@ -597,7 +597,7 @@ class Feishu(object):
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def medias_download(self, file_token, param={}):
         file_res = self.medias_download_to_bytes(file_token, param={})
@@ -629,7 +629,7 @@ class Feishu(object):
 
         url = url + "?" + urlencode({"file_tokens": file_tokens})
         resp = self.req_feishu_api("GET", url=url, check_code=False)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def drive_files_download_to_bytes(self, file_token):
         self._authorize_tenant_access_token()
@@ -723,7 +723,7 @@ class Feishu(object):
             url = url + "&" + urlencode(param)
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     # 批量获取用户ID
     def users_batch_get_id(self, req_body, param={}):
@@ -755,7 +755,7 @@ class Feishu(object):
             url = url + "?" + urlencode(param)
         action = "POST"
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
         # 批量获取用户ID
 
@@ -879,7 +879,7 @@ class Feishu(object):
         if param:
             url = url + "&" + urlencode(param)
         resp = self.req_feishu_api(action, url=url)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     # 获取或更新用户信息
     def get_contact_users(self, user_id, param='', user_info={}, **kwargs):
@@ -893,7 +893,7 @@ class Feishu(object):
         if param:
             url = url + "?" + urlencode(param)
         resp = self.req_feishu_api(action, url=url)
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def bot_permitted(self, token, type, perm='full_access', **kwargs):
         """
@@ -951,7 +951,7 @@ class Feishu(object):
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
 
-        return resp.get("data")
+        return resp.get("data") if resp else None
 
     def notify_send(self, msg_type, msg, receive_id_type, receive_id, **kwargs):
         """
@@ -988,7 +988,7 @@ class Feishu(object):
         )
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
-        return resp.get("bot")
+        return resp.get("bot") if resp else None
 
     # 获取机器人信息
     def applications_info(self, user_id_type='open_id'):
@@ -999,7 +999,10 @@ class Feishu(object):
         ).replace(':app_id', 'me')
         action = "GET"
         resp = self.req_feishu_api(action, url=url)
-        return resp.get("data").get('app')
+        if resp:
+            return resp.get("data", {}).get('app')
+        else:
+            return None
 
     def files_subscribe(self, file_type, file_token, **kwargs):
         """
@@ -1042,7 +1045,7 @@ class Feishu(object):
             action = "DELETE"
 
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
-        return resp.get('data')
+        return resp.get('data') if resp else None
 
     def tables_fields_info(self, field_names: list, app_token, table_id, query_params={}):
         """
