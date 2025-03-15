@@ -1021,6 +1021,16 @@ class Feishu(object):
         return resp
 
     # 列出字段、新增字段、更新字段、删除字段
+    """
+    GET是列出字段
+    没有 req_body 和 field_id
+    POST是新增字段
+    有 req_body 和 没有 field_id
+    PUT是更新字段
+    有 req_body 和 field_id
+    DELETE是删除字段
+    没有 req_body 和 field_id
+    """
     def tables_fields(self, app_token, table_id, query_params=None, field_id="", req_body=None):
         self.__dict__.update(locals())
         self._authorize_tenant_access_token()
@@ -1047,6 +1057,17 @@ class Feishu(object):
         resp = self.req_feishu_api(action, url=url, req_body=req_body)
         return resp.get('data') if resp else None
 
+    def create_table_field(self, app_token, table_id, req_body):
+        """
+        创建表格字段
+        req_body = {
+            "field_name": "文本",
+            "type": 1
+        }
+        """
+        return self.tables_fields(app_token=app_token, table_id=table_id, req_body=req_body)
+        
+    # 获取表格字段信息
     def tables_fields_info(self, field_names: list, app_token, table_id, query_params={}):
         """
         获取表格字段信息
