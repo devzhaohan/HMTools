@@ -366,33 +366,35 @@ class Feishu(object):
             response_dict = json.loads(resp.data.decode('utf-8'))
             code = response_dict.get("code")
             if code != 0:
-                msg_type = 'post'
-                msg = {
-                    "zh_cn": {
-                        "title": '接口请求异常',
-                        "content": [
-                            [{
-                                "tag": "text",
-                                "text": '请求接口: {}\n'.format(req_url)
-                            },
-                                {
-                                    "tag": "text",
-                                    "text": '返回异常: {} \n'.format(
-                                        json.dumps(response_dict, ensure_ascii=False, indent=4, separators=(',', ': ')))
-                                }
-                            ],
-                            [{
-                                "tag": "text",
-                                "text": "使用方法见 :\n"
-                            }, {
-                                "tag": "a",
-                                "href": "https://zhidateam.feishu.cn/docx/HXwhdg00eoXYPmxb1VncvcNbnvv",
-                                "text": "机器人使用手册"
-                            }]
-                        ]
-                    }
-                }
-                self.notify_send(msg_type, msg)
+                raise LarkException(code=code, msg=response_dict.get("msg"), url=req_url, req_body={}, headers={})
+            # if code != 0:
+            #     msg_type = 'post'
+            #     msg = {
+            #         "zh_cn": {
+            #             "title": '接口请求异常',
+            #             "content": [
+            #                 [{
+            #                     "tag": "text",
+            #                     "text": '请求接口: {}\n'.format(req_url)
+            #                 },
+            #                     {
+            #                         "tag": "text",
+            #                         "text": '返回异常: {} \n'.format(
+            #                             json.dumps(response_dict, ensure_ascii=False, indent=4, separators=(',', ': ')))
+            #                     }
+            #                 ],
+            #                 [{
+            #                     "tag": "text",
+            #                     "text": "使用方法见 :\n"
+            #                 }, {
+            #                     "tag": "a",
+            #                     "href": "https://zhidateam.feishu.cn/docx/HXwhdg00eoXYPmxb1VncvcNbnvv",
+            #                     "text": "机器人使用手册"
+            #                 }]
+            #             ]
+            #         }
+            #     }
+            #     self.notify_send(msg_type, msg)
         except Exception as e :
             raise e
             if self.print_feishu_log:
